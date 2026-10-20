@@ -1,50 +1,32 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Suspense } from "react";
-import { LogOut, Scissors } from "lucide-react";
-import { obterContextoPainel } from "@/lib/auth";
-import { sair } from "./actions";
-import { SeletorBarbearia } from "./seletor-barbearia";
+import { Marca } from "@/components/marca";
+import { ConteudoLateral } from "./_componentes/conteudo-lateral";
+import { MenuMobile } from "./_componentes/menu-mobile";
 
-export const metadata: Metadata = { title: { default: "Painel", template: "%s | Painel" } };
+export const metadata: Metadata = { title: { default: "Painel", template: "%s | Painel | Vai de Corte" } };
 
 export default function LayoutPainel({ children }: LayoutProps<"/painel">) {
-  return (
-    <div className="flex flex-1 flex-col bg-zinc-50">
-      <header className="border-b border-zinc-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
-          <Link href="/painel" className="flex items-center gap-2 font-semibold">
-            <Scissors className="size-5" />
-            <span className="hidden sm:inline">Barbeiro SaaS</span>
-          </Link>
-          <Suspense fallback={<div className="h-8 w-40 animate-pulse rounded-lg bg-zinc-100" />}>
-            <MenuUsuario />
-          </Suspense>
-        </div>
-      </header>
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</main>
-    </div>
+  const marca = (
+    <Link href="/painel" className="rounded-sm" aria-label="Vai de Corte, visão geral">
+      <Marca />
+    </Link>
   );
-}
-
-async function MenuUsuario() {
-  const { usuario, vinculos, atual } = await obterContextoPainel();
 
   return (
-    <div className="flex items-center gap-2">
-      {atual && vinculos.length > 1 && (
-        <SeletorBarbearia vinculos={vinculos} atualId={atual.barbeariaId} />
-      )}
-      <span className="hidden max-w-48 truncate text-sm text-zinc-600 md:inline">{usuario.email}</span>
-      <form action={sair}>
-        <button
-          type="submit"
-          className="flex items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-100"
-        >
-          <LogOut className="size-4" />
-          Sair
-        </button>
-      </form>
+    <div className="flex flex-1 flex-col lg:flex-row">
+      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col gap-8 overflow-y-auto border-r border-borda bg-superficie px-4 py-6 lg:flex">
+        <div className="px-1">{marca}</div>
+        <ConteudoLateral />
+      </aside>
+
+      <MenuMobile marca={marca}>
+        <ConteudoLateral />
+      </MenuMobile>
+
+      <main className="w-full min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8 lg:px-12 lg:py-10">
+        <div className="mx-auto w-full max-w-5xl">{children}</div>
+      </main>
     </div>
   );
 }

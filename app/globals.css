@@ -1,10 +1,148 @@
 @import "tailwindcss";
 
-@theme inline {
-  --font-sans: var(--font-geist-sans);
+/*
+ * Design system do Vai de Corte: todos os tokens ficam aqui.
+ * As paletas padrão do Tailwind estão desligadas (--color-*: initial), então só
+ * existem as cores abaixo. Isso também garante que nenhum verde entre na interface.
+ */
+@theme {
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  /* Superfícies */
+  --color-fundo: #0b0b0d;
+  --color-superficie: #151518; /* sidebar, barras */
+  --color-card: #1c1c20;
+  --color-elevado: #242428; /* dropdowns, modais, hover */
+
+  /* Dourado champanhe */
+  --color-ouro: #c8a96b;
+  --color-ouro-hover: #d8bb80;
+  --color-ouro-discreto: #8f7546; /* só bordas e detalhes: como texto não passa 4.5:1 sobre card */
+  --color-sobre-ouro: #17140e;
+
+  /* Texto */
+  --color-texto: #f5f1e8;
+  --color-texto-sec: #b8b4ac;
+  --color-texto-disc: #8c8982; /* não usar sobre "elevado" (4.43:1) */
+
+  /* Bordas */
+  --color-borda: #303035;
+  --color-borda-forte: #48484f;
+  --color-borda-campo: #706e68; /* contorno de campos: 3.3:1 sobre card (WCAG 1.4.11) */
+
+  /* Estados (sem verde) */
+  --color-sucesso: #8ab4f8;
+  --color-sucesso-fundo: #172337;
+  --color-erro: #f28b82;
+  --color-erro-fundo: #321d20;
+  --color-atencao: #e8b86d;
+  --color-atencao-fundo: #302719;
+  --color-info: #a9b9ce;
+  --color-info-fundo: #202a36;
+
+  /* Tipografia: Manrope nos títulos, Inter na interface */
+  --font-*: initial;
+  --font-titulo: var(--font-manrope), ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+
+  /* Tamanhos: nomes diferentes das cores (ex.: "card") para não colidir em text-* */
+  --text-titulo: 1.875rem; /* 30px, título da página */
+  --text-titulo--line-height: 1.15;
+  --text-titulo--letter-spacing: -0.02em;
+  --text-secao: 1.375rem; /* 22px */
+  --text-secao--line-height: 1.25;
+  --text-subtitulo: 1.0625rem; /* 17px */
+  --text-subtitulo--line-height: 1.35;
+  --text-base: 0.9375rem; /* 15px, texto de interface */
+  --text-base--line-height: 1.55;
+  --text-label: 0.8125rem; /* 13px */
+  --text-label--line-height: 1.4;
+  --text-numero: 2rem; /* 32px, indicadores */
+  --text-numero--line-height: 1.1;
+  --text-display: clamp(2.25rem, 4.4vw, 3.75rem); /* só na página inicial */
+  --text-display--line-height: 1.02;
+  --text-display--letter-spacing: -0.035em;
+
+  /* Raios: 8 controles, 12 painéis, 16 blocos grandes */
+  --radius-*: initial;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  /* Sombra só para o que flutua (menus, gaveta, modais) */
+  --shadow-*: initial;
+  --shadow-flutuante: 0 12px 32px rgb(0 0 0 / 0.45);
+
+  --ease-saida: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-body {
-  background: #ffffff;
-  color: #18181b;
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--color-fundo);
+    color: var(--color-texto);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-titulo);
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: var(--color-ouro);
+    color: var(--color-sobre-ouro);
+  }
+
+  /* Foco visível e consistente em tudo que é interativo */
+  :focus-visible {
+    outline: 2px solid var(--color-ouro);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+}
+
+@layer utilities {
+  .numeros {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/*
+ * Animações: o script no <head> marca o html com .anima antes da primeira pintura,
+ * escondendo só o que o GSAP vai revelar. Sem JS (ou com "reduzir movimento"),
+ * nada fica escondido.
+ */
+html.anima [data-anima] {
+  visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.anima [data-anima] {
+    visibility: visible;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

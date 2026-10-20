@@ -1,9 +1,9 @@
-# Barbeiro SaaS
+# Vai de Corte
 
 Agendamento online para barbearias: o cliente marca sozinho por um link e o barbeiro organiza a agenda num painel.
 Projeto do time "Programadores da Fiel" no Startup Challenge UMC 2026. Escopo e decisões em [CLAUDE.md](CLAUDE.md).
 
-Stack: Next.js 16 (App Router) + TypeScript + Tailwind CSS 4, Supabase (Postgres, Auth, RLS), Zod e Lucide.
+Stack: Next.js 16 (App Router) + TypeScript + Tailwind CSS 4, Supabase (Postgres, Auth, RLS), Zod, Lucide e GSAP.
 
 ## Rodar no seu computador
 
@@ -65,6 +65,22 @@ Recomendado: em **Authentication > Sign In / Providers**, desligue **Allow new u
 | `app/painel/` | Layout com menu (troca de barbearia e sair) e a página inicial do painel |
 
 Não existe cliente Supabase no navegador por enquanto: login, logout e consultas rodam no servidor.
+
+## Design system
+
+Tema escuro com dourado champanhe, Manrope nos títulos e Inter na interface.
+
+| Onde | O que tem |
+| --- | --- |
+| `app/globals.css` (bloco `@theme`) | **Todos os tokens**: cores, fontes, tamanhos de texto, raios e sombra. As cores padrão do Tailwind estão desligadas, então só existem as do Vai de Corte (e nenhum verde). |
+| `app/layout.tsx` | Carrega Manrope (600, 700) e Inter (400, 500, 600) pelo `next/font` |
+| `components/ui/` | `Botao` (primário, secundário, contorno, destrutivo, fantasma, com carregamento), `BotaoEnviar`, `Campo`, `Aviso` (sucesso, erro, atenção, info), `SeloStatus` (status do agendamento) e `Painel` |
+| `components/animacao/` | GSAP: `Revelar` (entrada em sequência), `Contador` (números que contam até o valor real) e o registro dos plugins |
+| `components/marca.tsx` | Logo e nome |
+
+Regras: use só classes com os tokens (`bg-card`, `text-texto-sec`, `border-borda`...), nunca cores soltas. Texto discreto (`text-texto-disc`) não vai sobre `bg-elevado` e o dourado discreto não é usado como texto (os dois ficam abaixo de 4,5:1 nesses fundos). Toda animação usa só transform e opacidade e respeita "reduzir movimento" do sistema.
+
+As skills de design usadas no redesign estão em `.agents/skills` (instaladas com `npx skills add`).
 
 ## Comandos
 
