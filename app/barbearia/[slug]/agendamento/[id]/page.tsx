@@ -11,7 +11,7 @@ import { SeloStatus } from "@/components/ui/selo-status";
 import { linkGoogleAgenda } from "@/lib/agenda-links";
 import { formatarDataLonga, formatarDuracao, formatarHora, formatarPreco, linkWhatsapp } from "@/lib/formatos";
 import { carregarAgendamento } from "@/lib/vitrine";
-import { Carimbo } from "./carimbo";
+import { Tesoura } from "./tesoura";
 import { enderecoCompleto, eventoDoAgendamento } from "./evento";
 
 export const metadata: Metadata = {
@@ -64,9 +64,9 @@ async function Conteudo({ params }: Pick<PageProps<"/barbearia/[slug]/agendament
   const mensagem = `Olá! Sou ${a.cliente_nome} e acabei de agendar pelo link: ${a.servico.nome} com ${a.barbeiro.nome}, ${dia}, às ${hora}.`;
 
   return (
-    <Revelar atraso={0.35} className="flex flex-col gap-8">
+    <Revelar atraso={0.5} className="flex flex-col gap-8">
       <header>
-        {ativo && <Carimbo />}
+        {ativo && <Tesoura />}
         <h1 className="mt-6 font-titulo text-[2rem] font-bold leading-[1.1] tracking-[-0.025em] sm:text-titulo" data-anima>
           {ativo
             ? `Horário reservado, ${a.cliente_nome}`
