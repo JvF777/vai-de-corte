@@ -6,13 +6,15 @@ export type ItemNavegacao = {
   Icone: typeof LayoutDashboard;
   /** Ainda não existe: aparece desabilitado com "Em breve". */
   emBreve?: boolean;
+  /** Cadastros que só o dono edita: o barbeiro não vê o item. */
+  soDono?: boolean;
 };
 
 export const NAVEGACAO: ItemNavegacao[] = [
   { rotulo: "Visão geral", href: "/painel", Icone: LayoutDashboard },
-  { rotulo: "Agenda", href: "/painel/agenda", Icone: CalendarDays, emBreve: true },
+  { rotulo: "Agenda", href: "/painel/agenda", Icone: CalendarDays },
+  { rotulo: "Serviços", href: "/painel/servicos", Icone: Scissors, soDono: true },
+  { rotulo: "Barbeiros", href: "/painel/barbeiros", Icone: UserRound, soDono: true },
+  { rotulo: "Barbearia", href: "/painel/barbearia", Icone: Settings, soDono: true },
   { rotulo: "Clientes", href: "/painel/clientes", Icone: Users, emBreve: true },
-  { rotulo: "Serviços", href: "/painel/servicos", Icone: Scissors, emBreve: true },
-  { rotulo: "Barbeiros", href: "/painel/barbeiros", Icone: UserRound, emBreve: true },
-  { rotulo: "Barbearia", href: "/painel/barbearia", Icone: Settings, emBreve: true },
 ];

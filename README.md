@@ -81,6 +81,25 @@ Cada barbearia tem o seu endereço: `/barbearia/<slug>` (no seed: http://localho
 
 Os horários aparecem calculados no servidor na hora em que o cliente escolhe o dia. Ao confirmar, a RPC `criar_agendamento_publico` confere tudo de novo no Postgres, com lock por barbeiro; se alguém pegou o horário um instante antes, a tela volta para a escolha de horário já atualizada.
 
+## Painel da barbearia
+
+| Tela | O que faz |
+| --- | --- |
+| `/painel/agenda` | Agenda do dia: no computador, uma coluna por barbeiro com horas, almoço, bloqueios e a linha de agora; no celular, uma lista por barbeiro. Tocar num cliente abre os detalhes para confirmar, concluir, cancelar ou marcar falta (concluir e falta só depois que o horário começa). Também tem "Bloquear horário" e "Novo agendamento" (com encaixe fora da grade). O dono vê todos; o barbeiro, só a própria agenda |
+| `/painel/servicos` | Tabela de serviços com preço, duração e quem faz; criar, editar, tirar do link ou excluir (se ainda não tiver agendamento) |
+| `/painel/barbeiros` e `/painel/barbeiros/[id]` | Equipe; por barbeiro: foto, apresentação, dias e horários com almoço, serviços que faz, folgas e férias |
+| `/painel/barbearia` | Nome, endereço, WhatsApp, Instagram, Maps, logo, até 12 fotos, horário de funcionamento e regras do link (intervalo, antecedência, quantos dias à frente) |
+
+| Arquivo | O que faz |
+| --- | --- |
+| `lib/painel/dados.ts` | Leituras do painel com a sessão do usuário (cadastro completo, agenda do dia, folgas) e `obterAcesso()` (papel e barbeiro ligado ao login) |
+| `lib/painel/agenda.ts` | Regras puras da agenda: ações permitidas por status, faixa de horas da grade, resumo do dia. Testes em `agenda.test.ts` |
+| `lib/painel/imagens.ts` | Envio e remoção de imagens no Storage (bucket `barbearias`) |
+| `app/painel/*/actions.ts` | Server Actions: validam com Zod, conferem o papel e gravam com a sessão do usuário (o RLS vale sempre) |
+| `components/ui/modal.tsx` | Modal com `<dialog>` nativo: folha de baixo no celular, centro no desktop |
+
+Só o dono vê Serviços, Barbeiros e Barbearia no menu. O agendamento manual usa a RPC `criar_agendamento_manual`, que trava o barbeiro e recusa bloqueios e choque de horário.
+
 ## Design system
 
 Tema escuro com dourado champanhe, Manrope nos títulos e Inter na interface.
@@ -103,7 +122,7 @@ As skills de design usadas no redesign estão em `.agents/skills` (instaladas co
 npm run dev     # servidor de desenvolvimento
 npm run build   # build de produção (precisa do .env.local preenchido)
 npm run lint    # ESLint
-npm test        # testes da disponibilidade (Vitest)
+npm test        # testes da disponibilidade e da agenda (Vitest)
 ```
 
 Banco, migrations, RLS e testes do banco: veja [supabase/README.md](supabase/README.md).

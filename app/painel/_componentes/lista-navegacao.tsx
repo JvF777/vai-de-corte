@@ -2,16 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { Papel } from "@/lib/auth";
 import { NAVEGACAO } from "./navegacao";
 
-export function ListaNavegacao() {
+/** papel nulo (ainda carregando) mostra tudo, para a lista não pular. */
+export function ListaNavegacao({ papel = null }: { papel?: Papel | null }) {
   const caminho = usePathname();
 
   return (
     <nav aria-label="Painel">
       <ul className="flex flex-col gap-0.5">
-        {NAVEGACAO.map(({ rotulo, href, Icone, emBreve }) => {
-          const ativo = caminho === href;
+        {NAVEGACAO.filter((item) => !(item.soDono && papel === "barbeiro")).map(({ rotulo, href, Icone, emBreve }) => {
+          const ativo = href === "/painel" ? caminho === href : caminho.startsWith(href);
           const classes = "flex min-h-11 items-center gap-3 rounded-sm px-3 text-base";
           if (emBreve) {
             return (
