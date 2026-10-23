@@ -66,6 +66,21 @@ Recomendado: em **Authentication > Sign In / Providers**, desligue **Allow new u
 
 Não existe cliente Supabase no navegador por enquanto: login, logout e consultas rodam no servidor.
 
+## Link público de agendamento
+
+Cada barbearia tem o seu endereço: `/barbearia/<slug>` (no seed: http://localhost:3000/barbearia/ficticia-navalha-de-ouro). O cliente agenda sem login, em quatro etapas: serviço, barbeiro (ou qualquer um disponível), dia e horário, e nome + WhatsApp com o aceite da LGPD. Depois cai na tela de confirmação, com botões de WhatsApp, Google Agenda e arquivo `.ics`.
+
+| Arquivo | O que faz |
+| --- | --- |
+| `lib/availability/` | **Única** lógica de disponibilidade do app: grade a partir da meia-noite, duração do serviço, funcionamento, jornada e almoço do barbeiro, folgas, bloqueios, antecedência mínima e janela. Funções puras, com testes em `availability.test.ts` |
+| `lib/vitrine.ts` | Lê o catálogo público (barbearia, serviços, barbeiros, horários) e chama as RPCs `horarios_ocupados` e `consultar_agendamento_publico` |
+| `lib/supabase/publico.ts` | Cliente Supabase do link público: sempre como visitante, sem sessão nem cookies |
+| `app/barbearia/[slug]/` | Página da barbearia, fluxo de agendamento e Server Actions (`buscarHorarios` e `agendar`) |
+| `app/barbearia/[slug]/agendamento/[id]/` | Tela de confirmação e o arquivo `agenda.ics` |
+| `lib/agenda-links.ts`, `lib/formatos.ts` | Link do Google Agenda, arquivo `.ics`, preço, duração, datas e links `wa.me` |
+
+Os horários aparecem calculados no servidor na hora em que o cliente escolhe o dia. Ao confirmar, a RPC `criar_agendamento_publico` confere tudo de novo no Postgres, com lock por barbeiro; se alguém pegou o horário um instante antes, a tela volta para a escolha de horário já atualizada.
+
 ## Design system
 
 Tema escuro com dourado champanhe, Manrope nos títulos e Inter na interface.
@@ -88,6 +103,7 @@ As skills de design usadas no redesign estão em `.agents/skills` (instaladas co
 npm run dev     # servidor de desenvolvimento
 npm run build   # build de produção (precisa do .env.local preenchido)
 npm run lint    # ESLint
+npm test        # testes da disponibilidade (Vitest)
 ```
 
 Banco, migrations, RLS e testes do banco: veja [supabase/README.md](supabase/README.md).
