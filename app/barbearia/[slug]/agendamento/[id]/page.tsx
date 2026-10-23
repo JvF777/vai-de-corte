@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CalendarPlus, Download, ExternalLink, MapPin, MessageCircle } from "lucide-react";
+import { CalendarPlus, CircleCheck, Download, ExternalLink, MapPin, MessageCircle } from "lucide-react";
 import { Revelar } from "@/components/animacao/revelar";
 import { Marca } from "@/components/marca";
 import { Aviso } from "@/components/ui/aviso";
@@ -11,7 +11,6 @@ import { SeloStatus } from "@/components/ui/selo-status";
 import { linkGoogleAgenda } from "@/lib/agenda-links";
 import { formatarDataLonga, formatarDuracao, formatarHora, formatarPreco, linkWhatsapp } from "@/lib/formatos";
 import { carregarAgendamento } from "@/lib/vitrine";
-import { Tesoura } from "./tesoura";
 import { enderecoCompleto, eventoDoAgendamento } from "./evento";
 
 export const metadata: Metadata = {
@@ -66,7 +65,7 @@ async function Conteudo({ params }: Pick<PageProps<"/barbearia/[slug]/agendament
   return (
     <Revelar atraso={0.5} className="flex flex-col gap-8">
       <header>
-        {ativo && <Tesoura />}
+        {ativo && <CircleCheck className="size-11 text-ouro" strokeWidth={1.5} aria-hidden />}
         <h1 className="mt-6 font-titulo text-[2rem] font-bold leading-[1.1] tracking-[-0.025em] sm:text-titulo" data-anima>
           {ativo
             ? `Horário reservado, ${a.cliente_nome}`

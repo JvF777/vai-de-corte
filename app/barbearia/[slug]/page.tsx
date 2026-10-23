@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: PageProps<"/barbearia/[slug]"
 
 export default function PaginaBarbearia({ params }: PageProps<"/barbearia/[slug]">) {
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex flex-1 flex-col bg-fundo" data-pagina-barbearia>
       <Suspense fallback={<Carregando />}>
         <Vitrine params={params} />
       </Suspense>

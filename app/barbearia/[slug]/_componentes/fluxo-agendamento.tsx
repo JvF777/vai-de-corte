@@ -1,7 +1,9 @@
 "use client";
 
 import { startTransition, useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { CalendarCheck, Clock, Users } from "lucide-react";
+import { cortarPagina } from "@/components/animacao/cortar-pagina";
 import { COM_MOVIMENTO, gsap, useGSAP } from "@/components/animacao/gsap";
 import { Aviso } from "@/components/ui/aviso";
 import { Botao } from "@/components/ui/botao";
@@ -34,6 +36,7 @@ const estadoInicial: EstadoAgendamento = { erro: null, tentativa: 0 };
 
 export function FluxoAgendamento({ slug, nomeBarbearia, servicos, barbeiros, funcionamento, regras, agora }: Props) {
   const [etapa, setEtapa] = useState<NomeEtapa>("servico");
+  const router = useRouter();
   const [interagiu, setInteragiu] = useState(false);
   const [servicoId, setServicoId] = useState<string | null>(null);
   const [barbeiro, setBarbeiro] = useState<EscolhaBarbeiro>(null);
@@ -147,6 +150,14 @@ export function FluxoAgendamento({ slug, nomeBarbearia, servicos, barbeiros, fun
 
   const [estado, enviar, enviando] = useActionState(async (anterior: EstadoAgendamento, formData: FormData) => {
     const r = await agendar(anterior, formData);
+    if (r.destino) {
+      // Horário reservado: a tesoura corta esta página e abre a confirmação por baixo.
+      const destino = r.destino;
+      const pagina = document.querySelector<HTMLElement>("[data-pagina-barbearia]") ?? document.body;
+      // Sem await: a navegação só acontece depois que a action termina.
+      void cortarPagina(pagina, () => router.push(destino), () => window.location.pathname === destino);
+      return r;
+    }
     if (r.horarioPerdido && servicoId) {
       // Alguém reservou antes: volta para os horários já atualizados.
       setHorario(null);

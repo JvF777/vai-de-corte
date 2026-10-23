@@ -1,6 +1,5 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { z } from "zod";
 import { calcularHorarios, dataValida, type Horario } from "@/lib/availability";
 import { criarClientePublico } from "@/lib/supabase/publico";
@@ -52,6 +51,8 @@ export type EstadoAgendamento = {
   /** O horário escolhido deixou de valer: a tela volta para a escolha de horário. */
   horarioPerdido?: boolean;
   campos?: { nome?: string; whatsapp?: string; lgpd?: string };
+  /** Agendamento criado: endereço da tela de confirmação. */
+  destino?: string;
   /** Muda a cada tentativa, para a tela reagir mesmo se o erro repetir. */
   tentativa: number;
 };
@@ -134,5 +135,6 @@ export async function agendar(anterior: EstadoAgendamento, formData: FormData): 
 
   const id = (data as { id?: string } | null)?.id;
   if (!id) return { erro: "Não foi possível agendar agora. Tente de novo em instantes.", tentativa };
-  redirect(`/barbearia/${d.slug}/agendamento/${id}`);
+  // A tela navega sozinha depois da animação do corte.
+  return { erro: null, destino: `/barbearia/${d.slug}/agendamento/${id}`, tentativa };
 }
