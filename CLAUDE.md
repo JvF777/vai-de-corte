@@ -18,6 +18,8 @@ Barbeiros perdem tempo respondendo mensagens no WhatsApp para marcar horário. O
 - Sem serviços pagos, sem API oficial do WhatsApp, sem pagamento online
 
 ## Decisões já tomadas
+- Nome do produto: **Vai de Corte**. Tema escuro, dourado champanhe, Manrope (títulos) e Inter (interface). Tokens só em `app/globals.css`; nada de verde na interface.
+- Animações com GSAP (`components/animacao`), só transform/opacidade e respeitando prefers-reduced-motion.
 - Multi barbearia desde o início: `barbearia_id` nas tabelas, RLS no Supabase e validação no servidor.
 - Link público por slug: `/barbearia/[slug]`.
 - Cliente agenda sem login. Cliente identificado pelo WhatsApp dentro da mesma barbearia.
