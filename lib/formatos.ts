@@ -54,3 +54,15 @@ export function linkWhatsapp(numero: string, mensagem?: string) {
   const base = `https://wa.me/${numero.replace(/\D/g, "")}`;
   return mensagem ? `${base}?text=${encodeURIComponent(mensagem)}` : base;
 }
+
+/** 4000 -> "40,00" (valor para o campo de preço). */
+export function centavosParaTexto(centavos: number) {
+  return (centavos / 100).toFixed(2).replace(".", ",");
+}
+
+/** "40", "40,5", "R$ 1.234,90" -> centavos. Nulo se não for um valor válido. */
+export function lerPreco(texto: string): number | null {
+  const limpo = texto.replace(/R\$|\s/g, "").replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", ".");
+  if (!/^\d+(\.\d{1,2})?$/.test(limpo)) return null;
+  return Math.round(Number(limpo) * 100);
+}

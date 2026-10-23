@@ -5,6 +5,8 @@ import { Contador } from "@/components/animacao/contador";
 import { Revelar } from "@/components/animacao/revelar";
 import { Aviso } from "@/components/ui/aviso";
 import { Painel } from "@/components/ui/painel";
+import { LinkBotao } from "@/components/ui/botao";
+import { CalendarDays } from "lucide-react";
 import { CopiarLink } from "./_componentes/copiar-link";
 
 export default function PaginaPainel() {
@@ -104,12 +106,14 @@ async function ConteudoPainel() {
           </p>
         </div>
         <CopiarLink slug={atual.slug} />
-        <Aviso tipo="info">A página de agendamento do cliente ainda está em construção. O link já é o definitivo.</Aviso>
       </Painel>
 
-      <p className="text-label text-texto-disc" data-anima>
-        Agenda do dia, cadastros e métricas chegam nas próximas atualizações.
-      </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" data-anima>
+        <p className="text-texto-sec">Os clientes de hoje, bloqueios e encaixes ficam na agenda.</p>
+        <LinkBotao href="/painel/agenda" icone={<CalendarDays aria-hidden />}>
+          Abrir a agenda
+        </LinkBotao>
+      </div>
     </Revelar>
   );
 }

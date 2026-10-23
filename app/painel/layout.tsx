@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Link from "next/link";
 import { Marca } from "@/components/marca";
 import { ConteudoLateral } from "./_componentes/conteudo-lateral";
@@ -20,9 +21,16 @@ export default function LayoutPainel({ children }: LayoutProps<"/painel">) {
         <ConteudoLateral />
       </aside>
 
-      <MenuMobile marca={marca}>
-        <ConteudoLateral />
-      </MenuMobile>
+      {/* O menu lê a rota atual (usePathname): em rotas dinâmicas isso só existe na hora da requisição. */}
+      <Suspense
+        fallback={
+          <div className="sticky top-0 z-30 flex h-14 items-center border-b border-borda bg-superficie px-4 lg:hidden">{marca}</div>
+        }
+      >
+        <MenuMobile marca={marca}>
+          <ConteudoLateral />
+        </MenuMobile>
+      </Suspense>
 
       <main className="w-full min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8 lg:px-12 lg:py-10">
         <div className="mx-auto w-full max-w-5xl">{children}</div>

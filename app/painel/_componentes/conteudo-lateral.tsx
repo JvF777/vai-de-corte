@@ -13,7 +13,9 @@ export function ConteudoLateral() {
       <Suspense fallback={<div className="h-11 rounded-sm bg-elevado" />}>
         <EscopoBarbearia />
       </Suspense>
-      <ListaNavegacao />
+      <Suspense fallback={<div className="h-72 rounded-sm" aria-hidden />}>
+        <Navegacao />
+      </Suspense>
       <div className="mt-auto">
         <Suspense fallback={<div className="h-24 rounded-sm bg-elevado" />}>
           <Usuario />
@@ -21,6 +23,11 @@ export function ConteudoLateral() {
       </div>
     </div>
   );
+}
+
+async function Navegacao() {
+  const { atual } = await obterContextoPainel();
+  return <ListaNavegacao papel={atual?.papel ?? null} />;
 }
 
 async function EscopoBarbearia() {

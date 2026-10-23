@@ -10,6 +10,7 @@ Etapa 1 do projeto: modelo de dados, migrations, RLS e seed.
 | `migrations/20261020000002_tabelas.sql` | As 11 tabelas, FKs compostas por `barbearia_id`, constraint anti reserva dupla, triggers |
 | `migrations/20261020000003_rls.sql` | Funções auxiliares de permissão, grants e todas as políticas de RLS |
 | `migrations/20261020000004_agendamento_publico.sql` | RPCs do link público: `horarios_ocupados`, `criar_agendamento_publico`, `consultar_agendamento_publico` |
+| `migrations/20261023000001_painel.sql` | Painel: RPC `criar_agendamento_manual` e o bucket público `barbearias` no Storage (logo e fotos), com escrita só do dono |
 | `seed.sql` | Duas barbearias **fictícias** (`ficticia-navalha-de-ouro` e `ficticia-corte-fino`) com serviços, barbeiros, horários, clientes e agendamentos de exemplo |
 | `scripts/vincular_usuario.sql` | Liga um usuário do Auth a uma barbearia como dono ou barbeiro |
 | `tests/*.test.sql` | Testes pgTAP: isolamento entre barbearias, permissões por papel e regras de agendamento |
@@ -59,6 +60,14 @@ Chamadas com a chave `anon` via `supabase.rpc(...)`:
 
 Erros vêm com `message` = código estável e `details` = texto em português:
 `BARBEARIA_NAO_ENCONTRADA`, `SERVICO_INVALIDO`, `BARBEIRO_INVALIDO`, `DADOS_INVALIDOS`, `LGPD_OBRIGATORIO`, `ANTECEDENCIA_MINIMA`, `FORA_DA_JANELA`, `FORA_DA_GRADE`, `FORA_DO_EXPEDIENTE`, `HORARIO_BLOQUEADO`, `HORARIO_INDISPONIVEL`, `LIMITE_AGENDAMENTOS`, `PERIODO_INVALIDO`.
+
+## RPC do painel
+
+- `criar_agendamento_manual(p_barbearia_id, p_barbeiro_id, p_servico_id, p_inicio, p_nome, p_whatsapp, p_observacoes)`: só para usuário logado (dono para qualquer barbeiro, barbeiro só para si). Não exige grade nem expediente (encaixe), aceita até 30 min no passado, nasce `confirmado` com origem `manual`. Recusa bloqueio (`HORARIO_BLOQUEADO`), outro cliente no horário (`HORARIO_INDISPONIVEL`) e falta de permissão (`SEM_PERMISSAO`).
+
+## Storage
+
+Bucket público `barbearias`, arquivos em `<barbearia_id>/...`, até 3 MB, JPG/PNG/WebP. Qualquer um lê (são as fotos do link); só o dono da barbearia grava ou apaga na pasta dela.
 
 ## Como testar
 
