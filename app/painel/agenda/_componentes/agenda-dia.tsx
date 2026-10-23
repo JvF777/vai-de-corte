@@ -6,9 +6,9 @@ import { Lock, Plus } from "lucide-react";
 import { Botao } from "@/components/ui/botao";
 import { Painel } from "@/components/ui/painel";
 import { SeloStatus } from "@/components/ui/selo-status";
-import { horaParaMinutos, instanteLocal, minutosParaHora, paraLocal, type Jornada } from "@/lib/availability";
+import { horaParaMinutos, instanteLocal, minutosParaHora, paraLocal, type Funcionamento, type Horario, type Jornada } from "@/lib/availability";
 import { formatarHora } from "@/lib/formatos";
-import { posicaoNaFaixa, STATUS_ATIVOS, type Faixa, type Status } from "@/lib/painel/agenda";
+import { agruparVagos, horariosVagos, posicaoNaFaixa, STATUS_ATIVOS, type Faixa, type Status, type TrechoVago } from "@/lib/painel/agenda";
 import type { AgendamentoPainel, BloqueioPainel, ServicoPainel } from "@/lib/painel/dados";
 import { horaCurta } from "@/app/barbearia/[slug]/_componentes/funcionamento";
 import { BloquearHorario } from "./bloquear-horario";
@@ -36,6 +36,9 @@ type Props = {
   servicos: ServicoPainel[];
   equipe: MembroEquipe[];
   abertoNoDia: boolean;
+  funcionamento: Funcionamento[];
+  /** Intervalo da grade da barbearia (minutos): o tamanho de cada horário vago. */
+  intervalo: number;
   barbeiroFiltro: string | null;
   /** Atalhos por barbeiro (só para o dono com mais de um barbeiro). id nulo = todos. */
   filtros: { id: string | null; rotulo: string; ativo: boolean }[];
@@ -81,6 +84,28 @@ export function AgendaDia(props: Props) {
   const agendamento = agendamentos.find((a) => a.id === detalhe) ?? null;
   const bloqueio = bloqueios.find((b) => b.id === bloqueioAberto) ?? null;
   const podeAgendar = props.servicos.length > 0 && props.equipe.length > 0;
+
+  // Horários vagos de cada barbeiro que pode receber cliente: viram atalhos de "tocar e marcar".
+  const vagos = new Map<string, Horario[]>(
+    barbeiros.map((b) => [
+      b.id,
+      podeAgendar && props.equipe.some((m) => m.id === b.id)
+        ? horariosVagos({
+            data,
+            barbeiroId: b.id,
+            jornada: b.jornada,
+            funcionamento: props.funcionamento,
+            intervalo: props.intervalo,
+            ocupados: [
+              ...ativos.filter((a) => a.barbeiroId === b.id),
+              ...bloqueios.filter((x) => x.barbeiroId === null || x.barbeiroId === b.id),
+            ],
+            agora: new Date(props.agora),
+          })
+        : [],
+    ]),
+  );
+  const abrirVago = (barbeiroId: string, hora: string) => setNovo({ barbeiroId, hora });
 
   return (
     <>
@@ -133,14 +158,8 @@ export function AgendaDia(props: Props) {
         <Painel className="px-5 py-10 text-center text-texto-sec">Nenhum barbeiro ativo. Cadastre a equipe em Barbeiros.</Painel>
       ) : (
         <>
-          <Grade
-            {...props}
-            ativos={ativos}
-            aoAbrirAgendamento={setDetalhe}
-            aoAbrirBloqueio={setBloqueioAberto}
-            aoClicarHorario={(barbeiroId, hora) => podeAgendar && setNovo({ barbeiroId, hora })}
-          />
-          <Lista {...props} ativos={ativos} aoAbrirAgendamento={setDetalhe} aoAbrirBloqueio={setBloqueioAberto} />
+          <Grade {...props} ativos={ativos} vagos={vagos} aoAbrirAgendamento={setDetalhe} aoAbrirBloqueio={setBloqueioAberto} aoClicarHorario={abrirVago} />
+          <Lista {...props} ativos={ativos} vagos={vagos} aoAbrirAgendamento={setDetalhe} aoAbrirBloqueio={setBloqueioAberto} aoClicarHorario={abrirVago} />
         </>
       )}
 
@@ -211,8 +230,10 @@ export function AgendaDia(props: Props) {
 
 type PropsVisao = Props & {
   ativos: AgendamentoPainel[];
+  vagos: Map<string, Horario[]>;
   aoAbrirAgendamento: (id: string) => void;
   aoAbrirBloqueio: (id: string) => void;
+  aoClicarHorario: (barbeiroId: string, hora: string) => void;
 };
 
 function textoJornada(j: Jornada | null) {
@@ -230,10 +251,12 @@ function Grade({
   barbeiros,
   ativos,
   bloqueios,
+  vagos,
+  intervalo,
   aoAbrirAgendamento,
   aoAbrirBloqueio,
   aoClicarHorario,
-}: PropsVisao & { aoClicarHorario: (barbeiroId: string, hora: string) => void }) {
+}: PropsVisao) {
   const altura = (faixa.fim - faixa.inicio) * PX;
   const horas: number[] = [];
   for (let m = faixa.inicio; m <= faixa.fim; m += 60) horas.push(m);
@@ -282,26 +305,21 @@ function Grade({
 
           {barbeiros.map((b) => {
             const j = b.jornada;
-            const trabalho = j ? posicaoMinutos(faixa, horaParaMinutos(j.inicio), horaParaMinutos(j.fim)) : null;
+            const ini = j ? horaParaMinutos(j.inicio) : faixa.fim;
+            const fim = j ? horaParaMinutos(j.fim) : faixa.fim;
+            const antes = posicaoMinutos(faixa, faixa.inicio, ini);
+            const depois = j ? posicaoMinutos(faixa, fim, faixa.fim) : null;
             const almoco =
               j?.almocoInicio && j.almocoFim ? posicaoMinutos(faixa, horaParaMinutos(j.almocoInicio), horaParaMinutos(j.almocoFim)) : null;
             const doBarbeiro = ativos.filter((a) => a.barbeiroId === b.id);
             const bloqueiosDele = bloqueios.filter((x) => x.barbeiroId === null || x.barbeiroId === b.id);
+            const alturaVago = intervalo * PX;
 
             return (
               <div key={b.id} className="border-l border-borda py-3">
-                <div
-                  className="relative cursor-pointer bg-fundo"
-                  style={{ height: altura }}
-                  title="Clique num horário vazio para agendar"
-                  onClick={(e) => {
-                    if (e.target !== e.currentTarget && !(e.target as HTMLElement).dataset.fundo) return;
-                    const y = e.clientY - e.currentTarget.getBoundingClientRect().top;
-                    const minuto = faixa.inicio + Math.floor(y / PX / 30) * 30;
-                    aoClicarHorario(b.id, minutosParaHora(minuto));
-                  }}
-                >
-                  {trabalho && <div data-fundo="1" className="absolute inset-x-0 bg-card" style={{ top: trabalho.topo, height: trabalho.altura }} />}
+                <div className="relative" style={{ height: altura }}>
+                  {antes && <ForaDoExpediente pos={antes} texto={j ? `Começa às ${horaCurta(j.inicio)}` : "Folga neste dia"} />}
+                  {depois && <ForaDoExpediente pos={depois} texto={`Termina às ${horaCurta(j!.fim)}`} />}
                   {horas.map((m) => (
                     <div key={m} className="pointer-events-none absolute inset-x-0 border-t border-borda" style={{ top: (m - faixa.inicio) * PX }} />
                   ))}
@@ -312,9 +330,27 @@ function Grade({
                       style={{ top: (m + 30 - faixa.inicio) * PX }}
                     />
                   ))}
-                  {!j && (
-                    <p className="pointer-events-none absolute inset-x-0 top-4 text-center text-label text-texto-disc">Folga</p>
-                  )}
+
+                  {(vagos.get(b.id) ?? []).map((v) => (
+                    <button
+                      key={v.inicio}
+                      type="button"
+                      onClick={() => aoClicarHorario(b.id, v.hora)}
+                      aria-label={`Agendar às ${v.hora} com ${b.nome}`}
+                      className="group/vago absolute inset-x-1.5 flex items-center gap-1.5 rounded-sm border border-transparent px-2.5 text-label text-texto-disc transition-colors hover:border-dashed hover:border-ouro-discreto hover:bg-ouro/5 hover:text-ouro-hover focus-visible:border-ouro focus-visible:text-ouro-hover focus-visible:outline-none"
+                      style={{ top: (horaParaMinutos(v.hora) - faixa.inicio) * PX + 1, height: alturaVago - 2 }}
+                    >
+                      {alturaVago >= 22 && (
+                        <>
+                          <span className="numeros">{v.hora}</span>
+                          <span className="flex items-center gap-1 opacity-0 transition-opacity group-hover/vago:opacity-100 group-focus-visible/vago:opacity-100">
+                            <Plus className="size-3.5" aria-hidden />
+                            Agendar
+                          </span>
+                        </>
+                      )}
+                    </button>
+                  ))}
                   {almoco && (
                     <div
                       className="pointer-events-none absolute inset-x-0 flex items-start px-3 pt-1.5 text-label text-texto-disc"
@@ -383,6 +419,15 @@ function Grade({
   );
 }
 
+/** Antes ou depois do expediente do barbeiro: um tom abaixo do card, com a hora escrita (não um buraco preto). */
+function ForaDoExpediente({ pos, texto }: { pos: { topo: number; altura: number }; texto: string }) {
+  return (
+    <div className="pointer-events-none absolute inset-x-0 bg-superficie" style={{ top: pos.topo, height: pos.altura }}>
+      {pos.altura >= 24 && <p className="px-3 pt-1.5 text-label text-texto-disc">{texto}</p>}
+    </div>
+  );
+}
+
 function posicaoMinutos(faixa: Faixa, de: number, ate: number) {
   const ini = Math.max(de, faixa.inicio);
   const fim = Math.min(ate, faixa.fim);
@@ -390,14 +435,15 @@ function posicaoMinutos(faixa: Faixa, de: number, ate: number) {
 }
 
 /** Lista do celular: um bloco por barbeiro, na ordem do dia. */
-function Lista({ data, barbeiros, ativos, bloqueios, aoAbrirAgendamento, aoAbrirBloqueio, abertoNoDia }: PropsVisao) {
+function Lista({ data, barbeiros, ativos, bloqueios, vagos, intervalo, aoAbrirAgendamento, aoAbrirBloqueio, aoClicarHorario, abertoNoDia }: PropsVisao) {
   return (
     <div className="flex flex-col gap-4 lg:hidden">
       {barbeiros.map((b) => {
         type Item =
           | { tipo: "agendamento"; inicio: string; a: AgendamentoPainel }
           | { tipo: "bloqueio"; inicio: string; x: BloqueioPainel }
-          | { tipo: "almoco"; inicio: string; fim: string };
+          | { tipo: "almoco"; inicio: string; fim: string }
+          | { tipo: "livre"; inicio: string; trecho: TrechoVago };
         const itens: Item[] = [
           ...ativos.filter((a) => a.barbeiroId === b.id).map((a) => ({ tipo: "agendamento" as const, inicio: a.inicio, a })),
           ...bloqueios
@@ -408,6 +454,10 @@ function Lista({ data, barbeiros, ativos, bloqueios, aoAbrirAgendamento, aoAbrir
         if (j?.almocoInicio && j.almocoFim) {
           itens.push({ tipo: "almoco", inicio: horaLocalIso(data, j.almocoInicio), fim: horaLocalIso(data, j.almocoFim) });
         }
+        const vagosDele = vagos.get(b.id) ?? [];
+        for (const trecho of agruparVagos(vagosDele, intervalo)) {
+          itens.push({ tipo: "livre", inicio: trecho.horarios[0].inicio, trecho });
+        }
         itens.sort((x, y) => new Date(x.inicio).getTime() - new Date(y.inicio).getTime());
         const temCliente = itens.some((i) => i.tipo === "agendamento");
 
@@ -417,11 +467,41 @@ function Lista({ data, barbeiros, ativos, bloqueios, aoAbrirAgendamento, aoAbrir
               <h2 className="truncate font-titulo text-subtitulo font-semibold">{b.nome}</h2>
               <p className="shrink-0 text-label text-texto-sec">{j ? `${horaCurta(j.inicio)} às ${horaCurta(j.fim)}` : "Folga"}</p>
             </div>
-            {!temCliente && (
-              <p className="px-4 pt-4 text-texto-sec">{abertoNoDia && j ? "Nenhum cliente marcado." : "Sem atendimento neste dia."}</p>
+            {vagosDele.length > 0 ? (
+              <p className="px-4 pt-3 text-label text-texto-sec">
+                {temCliente ? "Toque num horário livre para marcar." : "Nenhum cliente ainda. Toque num horário livre para marcar."}
+              </p>
+            ) : (
+              !temCliente && (
+                <p className="px-4 pt-4 text-texto-sec">{abertoNoDia && j ? "Nenhum horário livre." : "Sem atendimento neste dia."}</p>
+              )
             )}
             <ul className="flex flex-col gap-1.5 p-2">
               {itens.map((item) => {
+                if (item.tipo === "livre") {
+                  const { de, ate, horarios } = item.trecho;
+                  return (
+                    <li key={`livre-${de}`} className="grid grid-cols-[3.5rem_1fr] gap-3 rounded-sm border border-dashed border-borda-forte px-2 py-2.5">
+                      <span className="numeros pt-0.5 text-texto-sec">{minutosParaHora(de)}</span>
+                      <div className="min-w-0">
+                        <p className="text-label text-texto-sec">{horarios.length === 1 ? "Livre" : `Livre até ${minutosParaHora(ate)}`}</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {horarios.map((h) => (
+                            <button
+                              key={h.inicio}
+                              type="button"
+                              onClick={() => aoClicarHorario(b.id, h.hora)}
+                              aria-label={`Agendar às ${h.hora} com ${b.nome}`}
+                              className="numeros min-h-11 min-w-[4.25rem] rounded-sm border border-borda-forte px-3 text-base text-texto transition-colors hover:border-ouro-discreto hover:bg-ouro/10 active:bg-ouro/15"
+                            >
+                              {h.hora}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </li>
+                  );
+                }
                 if (item.tipo === "almoco") {
                   return (
                     <li key="almoco" className="grid grid-cols-[3.5rem_1fr] items-center gap-3 rounded-sm px-2 py-2.5 text-label text-texto-disc" style={HACHURA}>

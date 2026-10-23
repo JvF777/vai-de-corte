@@ -135,6 +135,8 @@ async function Agenda({ searchParams }: Pick<PageProps<"/painel/agenda">, "searc
           .filter((b) => b.ativo && (acesso.ehDono || b.id === acesso.meuBarbeiroId))
           .map((b) => ({ id: b.id, nome: b.nome, servicoIds: b.servicoIds }))}
         abertoNoDia={Boolean(funcionamentoDoDia)}
+        funcionamento={cadastro.funcionamento}
+        intervalo={cadastro.barbearia.regras.intervaloMinutos}
         barbeiroFiltro={filtro && visiveis.length === 1 ? filtro : null}
         filtros={
           chips
