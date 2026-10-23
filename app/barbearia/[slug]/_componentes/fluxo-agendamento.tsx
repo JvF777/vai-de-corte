@@ -61,6 +61,7 @@ export function FluxoAgendamento({ slug, nomeBarbearia, servicos, barbeiros, fun
   );
 
   function setHorario(h: Horario | null) {
+    if (!h && esperaNavalha.current) clearTimeout(esperaNavalha.current);
     setHorarioEscolhido(h);
     setAtendente(null);
   }
@@ -121,14 +122,22 @@ export function FluxoAgendamento({ slug, nomeBarbearia, servicos, barbeiros, fun
     carregarHorarios(dia, servicoId, barbeiroId);
   }
 
+  // Segura a troca de etapa até a passada da navalha no horário terminar.
+  const esperaNavalha = useRef<ReturnType<typeof setTimeout> | null>(null);
+  function irParaDadosDepoisDaNavalha() {
+    if (esperaNavalha.current) clearTimeout(esperaNavalha.current);
+    const reduzir = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    esperaNavalha.current = setTimeout(() => irPara("dados"), reduzir ? 0 : 480);
+  }
+
   function escolherHorario(h: Horario) {
     setHorario(h);
-    if (barbeiro !== "qualquer") return irPara("dados");
+    if (barbeiro !== "qualquer") return irParaDadosDepoisDaNavalha();
     // Qualquer barbeiro: com um só livre, vai ele; com mais de um, o cliente escolhe.
     if (h.barbeiroIds.length === 1) {
       setAtendente(h.barbeiroIds[0]);
-      irPara("dados");
-    }
+      irParaDadosDepoisDaNavalha();
+    } else if (esperaNavalha.current) clearTimeout(esperaNavalha.current);
   }
 
   function escolherAtendente(id: string) {

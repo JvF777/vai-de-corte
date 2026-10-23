@@ -46,6 +46,39 @@ export function SeletorHorario(props: Props) {
     { scope: escopo, dependencies: [resultado, carregando] },
   );
 
+  // Passada da navalha: ao tocar num horário, o dourado entra na diagonal com o fio
+  // da lâmina brilhando na frente. Só quando o cliente toca (não ao voltar à etapa).
+  const tocado = useRef<string | null>(null);
+  useGSAP(
+    () => {
+      if (!escolhido || tocado.current !== escolhido.inicio) return;
+      tocado.current = null;
+      const botao = escopo.current?.querySelector<HTMLButtonElement>("[data-horario][aria-pressed='true']");
+      const fundo = botao?.querySelector<HTMLElement>("[data-navalha]");
+      const fio = botao?.querySelector<HTMLElement>("[data-fio]");
+      if (!botao || !fundo || !fio) return;
+
+      const mm = gsap.matchMedia();
+      mm.add(COM_MOVIMENTO, () => {
+        const passada = { p: 0 };
+        const desenhar = () => {
+          const x = passada.p * 140;
+          fundo.style.clipPath = `polygon(0 0, ${x}% 0, ${x - 40}% 100%, 0 100%)`;
+          fio.style.left = `${x - 20}%`;
+        };
+        desenhar();
+        gsap
+          .timeline({ onComplete: () => fundo.style.removeProperty("clip-path") })
+          .to(passada, { p: 1, duration: 0.42, ease: "power2.inOut", onUpdate: desenhar }, 0)
+          .fromTo(fio, { opacity: 1 }, { opacity: 0, duration: 0.15 }, 0.3)
+          .from(botao, { color: "#f5f1e8", duration: 0.3, ease: "none" }, 0.08)
+          .fromTo(botao, { scale: 0.95 }, { scale: 1, duration: 0.4, ease: "back.out(2.5)", clearProps: "transform" }, 0);
+      });
+      return () => mm.revert();
+    },
+    { scope: escopo, dependencies: [escolhido?.inicio] },
+  );
+
   const proximoDia = data ? dias.find((d) => d.atende && d.data > data) : undefined;
 
   return (
@@ -144,17 +177,30 @@ export function SeletorHorario(props: Props) {
                           data-horario
                           aria-pressed={selecionado}
                           aria-label={textoQuem ? `${h.hora}, com ${textoQuem}` : undefined}
-                          onClick={() => onEscolherHorario(h)}
-                          className={`numeros flex min-h-11 flex-col items-center justify-center rounded-sm border px-1 py-1.5 text-base font-medium transition-colors ${
+                          onClick={() => {
+                            tocado.current = h.inicio;
+                            onEscolherHorario(h);
+                          }}
+                          className={`numeros relative flex min-h-11 flex-col items-center justify-center overflow-hidden rounded-sm border px-1 py-1.5 text-base font-medium transition-colors ${
                             selecionado
-                              ? "border-ouro bg-ouro text-sobre-ouro"
+                              ? "border-ouro bg-card text-sobre-ouro"
                               : "border-borda-forte bg-card text-texto hover:border-ouro-discreto"
                           }`}
                         >
-                          {h.hora}
+                          {selecionado && (
+                            <>
+                              <span data-navalha className="absolute inset-0 bg-ouro" aria-hidden />
+                              <span
+                                data-fio
+                                className="pointer-events-none absolute -inset-y-2 left-[110%] w-0.5 rotate-[22deg] bg-texto opacity-0"
+                                aria-hidden
+                              />
+                            </>
+                          )}
+                          <span className="relative">{h.hora}</span>
                           {textoQuem && (
                             <span
-                              className={`mt-0.5 w-full truncate text-[0.6875rem] font-normal leading-tight ${selecionado ? "text-sobre-ouro" : "text-texto-sec"}`}
+                              className={`relative mt-0.5 w-full truncate text-[0.6875rem] font-normal leading-tight ${selecionado ? "text-sobre-ouro" : "text-texto-sec"}`}
                               aria-hidden
                             >
                               {textoQuem}
