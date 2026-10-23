@@ -6,7 +6,7 @@ import { Lock, Plus } from "lucide-react";
 import { Botao } from "@/components/ui/botao";
 import { Painel } from "@/components/ui/painel";
 import { SeloStatus } from "@/components/ui/selo-status";
-import { horaParaMinutos, instanteLocal, minutosParaHora, paraLocal, type Funcionamento, type Horario, type Jornada } from "@/lib/availability";
+import { horaParaMinutos, instanteLocal, minutosParaHora, type Funcionamento, type Horario, type Jornada } from "@/lib/availability";
 import { formatarHora } from "@/lib/formatos";
 import { horariosVagos, posicaoNaFaixa, STATUS_ATIVOS, type Faixa, type Status } from "@/lib/painel/agenda";
 import type { AgendamentoPainel, BloqueioPainel, ServicoPainel } from "@/lib/painel/dados";
@@ -245,8 +245,6 @@ function textoJornada(j: Jornada | null) {
 /** Grade do desktop: horas na vertical, uma coluna por barbeiro. */
 function Grade({
   data,
-  hoje,
-  agora,
   faixa,
   barbeiros,
   ativos,
@@ -261,12 +259,6 @@ function Grade({
   const horas: number[] = [];
   for (let m = faixa.inicio; m <= faixa.fim; m += 60) horas.push(m);
   const colunas = { gridTemplateColumns: `3.5rem repeat(${barbeiros.length}, minmax(12rem, 1fr))` };
-
-  const agoraLocal = paraLocal(new Date(agora));
-  const linhaAgora =
-    data === hoje && agoraLocal.minutos >= faixa.inicio && agoraLocal.minutos <= faixa.fim
-      ? (agoraLocal.minutos - faixa.inicio) * PX
-      : null;
 
   return (
     <div className="hidden overflow-x-auto rounded-md border border-borda bg-card lg:block">
@@ -292,14 +284,6 @@ function Grade({
                   {minutosParaHora(m)}
                 </span>
               ))}
-              {linhaAgora !== null && (
-                <span
-                  className="numeros absolute right-1 z-20 -translate-y-1/2 rounded-sm bg-ouro px-1 text-[0.75rem] font-semibold text-sobre-ouro"
-                  style={{ top: linhaAgora }}
-                >
-                  {minutosParaHora(agoraLocal.minutos)}
-                </span>
-              )}
             </div>
           </div>
 
@@ -406,12 +390,6 @@ function Grade({
                     );
                   })}
 
-                  {linhaAgora !== null && (
-                    // Linha de "agora": passa por baixo dos clientes para não parecer texto riscado.
-                    <div className="pointer-events-none absolute inset-x-0 z-0 h-0.5 -translate-y-1/2 bg-ouro" style={{ top: linhaAgora }}>
-                      <span className="absolute -left-1 top-1/2 size-2 -translate-y-1/2 rounded-full bg-ouro" />
-                    </div>
-                  )}
                 </div>
               </div>
             );
