@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { instanteLocal, type Funcionamento, type Jornada } from "@/lib/availability";
 import { lerPreco } from "@/lib/formatos";
-import { acoesPermitidas, agruparVagos, faixaDoDia, horariosVagos, limitesDoDia, posicaoNaFaixa, resumirDia, resumirDias } from "./agenda";
+import { acoesPermitidas, faixaDoDia, horariosVagos, limitesDoDia, posicaoNaFaixa, resumirDia, resumirDias } from "./agenda";
 
 const SEXTA = "2026-10-23";
 const h = (hora: string, data = SEXTA) => {
@@ -115,23 +115,5 @@ describe("horariosVagos", () => {
   it("não oferece horário que já passou nem dia de folga", () => {
     expect(horariosVagos({ ...base, ocupados: [], agora: h("10:40") }).map((v) => v.hora)).toEqual(["11:00", "11:30"]);
     expect(horariosVagos({ ...base, jornada: null, ocupados: [] })).toEqual([]);
-  });
-});
-
-describe("agruparVagos", () => {
-  it("junta horários seguidos em trechos", () => {
-    const vagos = horariosVagos({
-      data: SEXTA,
-      barbeiroId: "b1",
-      jornada: { diaSemana: 5, inicio: "09:00", fim: "12:00", almocoInicio: null, almocoFim: null },
-      funcionamento: [{ diaSemana: 5, abre: "09:00", fecha: "19:00" }],
-      intervalo: 30,
-      ocupados: [{ barbeiroId: "b1", inicio: h("10:00"), fim: h("10:45") }],
-      agora: h("08:00", "2026-10-22"),
-    });
-    expect(agruparVagos(vagos, 30).map((t) => [t.de, t.ate, t.horarios.length])).toEqual([
-      [540, 600, 2],
-      [660, 720, 2],
-    ]);
   });
 });

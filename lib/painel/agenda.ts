@@ -178,21 +178,3 @@ export function horariosVagos(entrada: {
     agora: entrada.agora,
   });
 }
-
-export type TrechoVago = { de: number; ate: number; horarios: Horario[] };
-
-/** Junta horários vagos seguidos em trechos ("livre das 14:00 às 16:00"), em minutos do dia. */
-export function agruparVagos(horarios: Horario[], intervalo: number): TrechoVago[] {
-  const trechos: TrechoVago[] = [];
-  for (const h of horarios) {
-    const m = horaParaMinutos(h.hora);
-    const ultimo = trechos[trechos.length - 1];
-    if (ultimo && ultimo.ate === m) {
-      ultimo.ate = m + intervalo;
-      ultimo.horarios.push(h);
-    } else {
-      trechos.push({ de: m, ate: m + intervalo, horarios: [h] });
-    }
-  }
-  return trechos;
-}

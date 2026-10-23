@@ -8,7 +8,7 @@ import { Painel } from "@/components/ui/painel";
 import { SeloStatus } from "@/components/ui/selo-status";
 import { horaParaMinutos, instanteLocal, minutosParaHora, paraLocal, type Funcionamento, type Horario, type Jornada } from "@/lib/availability";
 import { formatarHora } from "@/lib/formatos";
-import { agruparVagos, horariosVagos, posicaoNaFaixa, STATUS_ATIVOS, type Faixa, type Status, type TrechoVago } from "@/lib/painel/agenda";
+import { horariosVagos, posicaoNaFaixa, STATUS_ATIVOS, type Faixa, type Status } from "@/lib/painel/agenda";
 import type { AgendamentoPainel, BloqueioPainel, ServicoPainel } from "@/lib/painel/dados";
 import { horaCurta } from "@/app/barbearia/[slug]/_componentes/funcionamento";
 import { BloquearHorario } from "./bloquear-horario";
@@ -435,7 +435,7 @@ function posicaoMinutos(faixa: Faixa, de: number, ate: number) {
 }
 
 /** Lista do celular: um bloco por barbeiro, na ordem do dia. */
-function Lista({ data, barbeiros, ativos, bloqueios, vagos, intervalo, aoAbrirAgendamento, aoAbrirBloqueio, aoClicarHorario, abertoNoDia }: PropsVisao) {
+function Lista({ data, barbeiros, ativos, bloqueios, vagos, aoAbrirAgendamento, aoAbrirBloqueio, aoClicarHorario, abertoNoDia }: PropsVisao) {
   return (
     <div className="flex flex-col gap-4 lg:hidden">
       {barbeiros.map((b) => {
@@ -443,7 +443,7 @@ function Lista({ data, barbeiros, ativos, bloqueios, vagos, intervalo, aoAbrirAg
           | { tipo: "agendamento"; inicio: string; a: AgendamentoPainel }
           | { tipo: "bloqueio"; inicio: string; x: BloqueioPainel }
           | { tipo: "almoco"; inicio: string; fim: string }
-          | { tipo: "livre"; inicio: string; trecho: TrechoVago };
+          | { tipo: "livre"; inicio: string; hora: string };
         const itens: Item[] = [
           ...ativos.filter((a) => a.barbeiroId === b.id).map((a) => ({ tipo: "agendamento" as const, inicio: a.inicio, a })),
           ...bloqueios
@@ -455,9 +455,7 @@ function Lista({ data, barbeiros, ativos, bloqueios, vagos, intervalo, aoAbrirAg
           itens.push({ tipo: "almoco", inicio: horaLocalIso(data, j.almocoInicio), fim: horaLocalIso(data, j.almocoFim) });
         }
         const vagosDele = vagos.get(b.id) ?? [];
-        for (const trecho of agruparVagos(vagosDele, intervalo)) {
-          itens.push({ tipo: "livre", inicio: trecho.horarios[0].inicio, trecho });
-        }
+        for (const v of vagosDele) itens.push({ tipo: "livre", inicio: v.inicio, hora: v.hora });
         itens.sort((x, y) => new Date(x.inicio).getTime() - new Date(y.inicio).getTime());
         const temCliente = itens.some((i) => i.tipo === "agendamento");
 
@@ -467,38 +465,28 @@ function Lista({ data, barbeiros, ativos, bloqueios, vagos, intervalo, aoAbrirAg
               <h2 className="truncate font-titulo text-subtitulo font-semibold">{b.nome}</h2>
               <p className="shrink-0 text-label text-texto-sec">{j ? `${horaCurta(j.inicio)} às ${horaCurta(j.fim)}` : "Folga"}</p>
             </div>
-            {vagosDele.length > 0 ? (
-              <p className="px-4 pt-3 text-label text-texto-sec">
-                {temCliente ? "Toque num horário livre para marcar." : "Nenhum cliente ainda. Toque num horário livre para marcar."}
-              </p>
-            ) : (
-              !temCliente && (
-                <p className="px-4 pt-4 text-texto-sec">{abertoNoDia && j ? "Nenhum horário livre." : "Sem atendimento neste dia."}</p>
-              )
+            {!temCliente && vagosDele.length === 0 && (
+              <p className="px-4 pt-4 text-texto-sec">{abertoNoDia && j ? "Nenhum horário livre." : "Sem atendimento neste dia."}</p>
             )}
             <ul className="flex flex-col gap-1.5 p-2">
               {itens.map((item) => {
                 if (item.tipo === "livre") {
-                  const { de, ate, horarios } = item.trecho;
+                  // Uma linha por horário vago, como numa agenda de papel: tocar na linha marca o cliente.
                   return (
-                    <li key={`livre-${de}`} className="grid grid-cols-[3.5rem_1fr] gap-3 rounded-sm border border-dashed border-borda-forte px-2 py-2.5">
-                      <span className="numeros pt-0.5 text-texto-sec">{minutosParaHora(de)}</span>
-                      <div className="min-w-0">
-                        <p className="text-label text-texto-sec">{horarios.length === 1 ? "Livre" : `Livre até ${minutosParaHora(ate)}`}</p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {horarios.map((h) => (
-                            <button
-                              key={h.inicio}
-                              type="button"
-                              onClick={() => aoClicarHorario(b.id, h.hora)}
-                              aria-label={`Agendar às ${h.hora} com ${b.nome}`}
-                              className="numeros min-h-11 min-w-[4.25rem] rounded-sm border border-borda-forte px-3 text-base text-texto transition-colors hover:border-ouro-discreto hover:bg-ouro/10 active:bg-ouro/15"
-                            >
-                              {h.hora}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+                    <li key={item.inicio}>
+                      <button
+                        type="button"
+                        onClick={() => aoClicarHorario(b.id, item.hora)}
+                        aria-label={`Agendar às ${item.hora} com ${b.nome}`}
+                        className="grid min-h-12 w-full grid-cols-[3.5rem_1fr_auto] items-center gap-3 rounded-sm border border-borda px-2 text-left transition-colors hover:border-ouro-discreto active:bg-ouro/10"
+                      >
+                        <span className="numeros text-texto-sec">{item.hora}</span>
+                        <span className="text-texto-disc">Livre</span>
+                        <span className="flex items-center gap-1.5 pr-1 text-label font-medium text-ouro-hover">
+                          <Plus className="size-4" aria-hidden />
+                          Agendar
+                        </span>
+                      </button>
                     </li>
                   );
                 }

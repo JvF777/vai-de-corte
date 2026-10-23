@@ -234,7 +234,7 @@ function Formulario({
           <>
             {!servicoId || !barbeiroId ? (
               <p className="text-texto-disc">
-                {alvo && barbeiroId ? `Escolha o serviço para confirmar as ${alvo}.` : "Escolha o serviço e o barbeiro para ver os horários livres."}
+                {alvo && barbeiroId ? `Escolha o serviço para confirmar às ${alvo}.` : "Escolha o serviço e o barbeiro para ver os horários livres."}
               </p>
             ) : buscando && !busca ? (
               <p className="flex items-center gap-2 text-texto-sec">
