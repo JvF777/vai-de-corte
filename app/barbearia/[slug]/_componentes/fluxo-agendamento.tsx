@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useMemo, useRef, useState, useTransition } from "react";
+import { startTransition, useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { CalendarCheck, Clock, Users } from "lucide-react";
 import { COM_MOVIMENTO, gsap, useGSAP } from "@/components/animacao/gsap";
 import { Aviso } from "@/components/ui/aviso";
@@ -38,7 +38,9 @@ export function FluxoAgendamento({ slug, nomeBarbearia, servicos, barbeiros, fun
   const [servicoId, setServicoId] = useState<string | null>(null);
   const [barbeiro, setBarbeiro] = useState<EscolhaBarbeiro>(null);
   const [data, setData] = useState<string | null>(null);
-  const [horario, setHorario] = useState<Horario | null>(null);
+  const [horario, setHorarioEscolhido] = useState<Horario | null>(null);
+  /** Em "qualquer barbeiro": quem vai atender no horário escolhido. */
+  const [atendente, setAtendente] = useState<string | null>(null);
   const [resultado, setResultado] = useState<ResultadoHorarios | null>(null);
   const [carregando, iniciar] = useTransition();
   const ultimaBusca = useRef("");
@@ -57,6 +59,11 @@ export function FluxoAgendamento({ slug, nomeBarbearia, servicos, barbeiros, fun
         : [],
     [servicoId, barbeiroId, barbeiros, funcionamento, regras, agora],
   );
+
+  function setHorario(h: Horario | null) {
+    setHorarioEscolhido(h);
+    setAtendente(null);
+  }
 
   function carregarHorarios(dia: string, servico_: string, barbeiro_: string | null) {
     const chave = `${servico_}|${barbeiro_}|${dia}`;
@@ -86,7 +93,7 @@ export function FluxoAgendamento({ slug, nomeBarbearia, servicos, barbeiros, fun
   }
 
   function escolherServico(id: string) {
-    if (id === servicoId && barbeiro) return irPara(horario ? "dados" : "horario");
+    if (id === servicoId && barbeiro) return irPara(horario && (barbeiro !== "qualquer" || atendente) ? "dados" : "horario");
     setServicoId(id);
     const quem = barbeirosElegiveis(barbeiros, id, null);
     // Só um barbeiro faz esse serviço: escolhe por ele e pula a etapa.
@@ -102,7 +109,7 @@ export function FluxoAgendamento({ slug, nomeBarbearia, servicos, barbeiros, fun
 
   function escolherBarbeiro(escolha: EscolhaBarbeiro) {
     if (!servicoId) return;
-    if (escolha === barbeiro && horario) return irPara("dados");
+    if (escolha === barbeiro && horario && (escolha !== "qualquer" || atendente)) return irPara("dados");
     setBarbeiro(escolha);
     abrirHorarios(servicoId, escolha);
   }
@@ -116,6 +123,16 @@ export function FluxoAgendamento({ slug, nomeBarbearia, servicos, barbeiros, fun
 
   function escolherHorario(h: Horario) {
     setHorario(h);
+    if (barbeiro !== "qualquer") return irPara("dados");
+    // Qualquer barbeiro: com um só livre, vai ele; com mais de um, o cliente escolhe.
+    if (h.barbeiroIds.length === 1) {
+      setAtendente(h.barbeiroIds[0]);
+      irPara("dados");
+    }
+  }
+
+  function escolherAtendente(id: string) {
+    setAtendente(id);
     irPara("dados");
   }
 
@@ -149,8 +166,11 @@ export function FluxoAgendamento({ slug, nomeBarbearia, servicos, barbeiros, fun
     if (i === indice) return "atual";
     return i < indice ? "feita" : "futura";
   };
-  const nomeBarbeiro =
-    barbeiro === "qualquer" ? "Qualquer barbeiro disponível" : (barbeiros.find((b) => b.id === barbeiro)?.nome ?? "");
+  const nomeDe = (id: string | null) => barbeiros.find((b) => b.id === id)?.nome ?? "";
+  const nomeBarbeiro = barbeiro === "qualquer" ? "Qualquer barbeiro disponível" : nomeDe(barbeiro);
+  // Barbeiro que vai no agendamento: o escolhido na etapa 2 ou o escolhido no horário.
+  const barbeiroFinal = barbeiroId ?? atendente;
+  const precisaAtendente = barbeiro === "qualquer" && horario !== null && !atendente;
   const quando = horario && data ? `${partesDoDia(data).completa}, às ${horario.hora}` : null;
 
   return (
@@ -220,14 +240,7 @@ export function FluxoAgendamento({ slug, nomeBarbearia, servicos, barbeiros, fun
                   onClick={() => escolherBarbeiro(b.id)}
                   nome={b.nome}
                   detalhe={b.bio}
-                  avatar={
-                    b.fotoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element -- foto vem de URL livre cadastrada pela barbearia
-                      <img src={b.fotoUrl} alt="" className="size-full rounded-full object-cover" />
-                    ) : (
-                      <span className="font-titulo font-bold">{b.nome.trim()[0]?.toUpperCase()}</span>
-                    )
-                  }
+                  avatar={<AvatarBarbeiro barbeiro={b} />}
                 />
               </li>
             ))}
@@ -240,7 +253,14 @@ export function FluxoAgendamento({ slug, nomeBarbearia, servicos, barbeiros, fun
           situacao={situacao("horario")}
           focarAoAbrir={interagiu}
           onAlterar={() => irPara("horario")}
-          resumo={quando && <span className="first-letter:uppercase">{quando}</span>}
+          resumo={
+            quando && (
+              <span className="first-letter:uppercase">
+                {quando}
+                {barbeiro === "qualquer" && atendente ? `, com ${nomeDe(atendente)}` : ""}
+              </span>
+            )
+          }
         >
           {dias.some((d) => d.atende) ? (
             <SeletorHorario
@@ -251,11 +271,19 @@ export function FluxoAgendamento({ slug, nomeBarbearia, servicos, barbeiros, fun
               carregando={carregando}
               escolhido={horario}
               onEscolherHorario={escolherHorario}
+              nomes={barbeiro === "qualquer" ? Object.fromEntries(barbeiros.map((b) => [b.id, primeiroNome(b.nome)])) : undefined}
               onTentarDeNovo={() => data && servicoId && carregarHorarios(data, servicoId, barbeiroId)}
               onVerQualquer={barbeiroId && elegiveis.length > 1 ? () => escolherBarbeiro("qualquer") : undefined}
             />
           ) : (
             <p className="text-texto-sec">Não há dias com atendimento para esse serviço nas próximas semanas.</p>
+          )}
+          {precisaAtendente && horario && (
+            <EscolhaAtendente
+              hora={horario.hora}
+              barbeiros={horario.barbeiroIds.map((id) => barbeiros.find((b) => b.id === id)).filter((b) => b !== undefined)}
+              onEscolher={escolherAtendente}
+            />
           )}
           {estado.horarioPerdido && estado.erro && !horario && (
             <div className="mt-5">
@@ -265,7 +293,7 @@ export function FluxoAgendamento({ slug, nomeBarbearia, servicos, barbeiros, fun
         </Etapa>
 
         <Etapa numero={4} titulo="Seus dados" situacao={situacao("dados")} focarAoAbrir={interagiu}>
-          {servico && horario && data && (
+          {servico && horario && data && barbeiroFinal && (
             <form
               className="flex flex-col gap-6"
               noValidate
@@ -278,10 +306,10 @@ export function FluxoAgendamento({ slug, nomeBarbearia, servicos, barbeiros, fun
             >
               <input type="hidden" name="slug" value={slug} />
               <input type="hidden" name="servicoId" value={servico.id} />
-              <input type="hidden" name="barbeiroId" value={barbeiroId ?? ""} />
+              <input type="hidden" name="barbeiroId" value={barbeiroFinal} />
               <input type="hidden" name="inicio" value={horario.inicio} />
 
-              <Comanda servico={servico} barbeiro={nomeBarbeiro} quando={quando ?? ""} />
+              <Comanda servico={servico} barbeiro={nomeDe(barbeiroFinal)} quando={quando ?? ""} />
 
               <div className="grid gap-5 sm:grid-cols-2">
                 <Campo
@@ -313,6 +341,55 @@ export function FluxoAgendamento({ slug, nomeBarbearia, servicos, barbeiros, fun
           )}
         </Etapa>
       </ol>
+    </div>
+  );
+}
+
+function AvatarBarbeiro({ barbeiro }: { barbeiro: Barbeiro }) {
+  return barbeiro.fotoUrl ? (
+    // eslint-disable-next-line @next/next/no-img-element -- foto vem de URL livre cadastrada pela barbearia
+    <img src={barbeiro.fotoUrl} alt="" className="size-full rounded-full object-cover" />
+  ) : (
+    <span className="font-titulo font-bold">{barbeiro.nome.trim()[0]?.toUpperCase()}</span>
+  );
+}
+
+/** "Carlos (fictício)" -> "Carlos" */
+function primeiroNome(nome: string) {
+  return nome.trim().split(/\s+/)[0] ?? nome;
+}
+
+/** Mais de um barbeiro livre no horário escolhido: o cliente diz com quem quer. */
+function EscolhaAtendente({ hora, barbeiros, onEscolher }: { hora: string; barbeiros: Barbeiro[]; onEscolher: (id: string) => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const { bottom } = el.getBoundingClientRect();
+    if (bottom > window.innerHeight) {
+      const reduzir = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      el.scrollIntoView({ block: "nearest", behavior: reduzir ? "auto" : "smooth" });
+    }
+  }, [hora]);
+
+  return (
+    <div ref={ref} className="mt-6 rounded-md border border-ouro-discreto bg-card p-4 sm:p-5" role="group" aria-labelledby="titulo-atendente">
+      <p id="titulo-atendente" className="font-medium text-texto">
+        Às <span className="numeros">{hora}</span>, com quem você quer?
+      </p>
+      <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+        {barbeiros.map((b) => (
+          <li key={b.id}>
+            <OpcaoBarbeiro
+              selecionado={false}
+              onClick={() => onEscolher(b.id)}
+              nome={b.nome}
+              detalhe={b.bio}
+              avatar={<AvatarBarbeiro barbeiro={b} />}
+            />
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

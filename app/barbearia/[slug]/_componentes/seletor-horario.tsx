@@ -22,13 +22,15 @@ type Props = {
   carregando: boolean;
   escolhido: Horario | null;
   onEscolherHorario: (h: Horario) => void;
+  /** Em "qualquer barbeiro": primeiro nome de cada barbeiro, para mostrar quem atende em cada horário. */
+  nomes?: Record<string, string>;
   onTentarDeNovo: () => void;
   /** Só quando um barbeiro específico foi escolhido e há outros que fazem o serviço. */
   onVerQualquer?: () => void;
 };
 
 export function SeletorHorario(props: Props) {
-  const { dias, data, onEscolherDia, resultado, carregando, escolhido, onEscolherHorario, onTentarDeNovo, onVerQualquer } = props;
+  const { dias, data, onEscolherDia, resultado, carregando, escolhido, onEscolherHorario, onTentarDeNovo, onVerQualquer, nomes } = props;
   const escopo = useRef<HTMLDivElement>(null);
 
   // Os horários do dia entram um a um, como a agenda sendo montada.
@@ -133,20 +135,31 @@ export function SeletorHorario(props: Props) {
                   <div role="group" aria-labelledby={idRotulo} className="mt-2 grid grid-cols-3 gap-2 min-[420px]:grid-cols-4 md:grid-cols-5 xl:grid-cols-6">
                     {lista.map((h) => {
                       const selecionado = escolhido?.inicio === h.inicio;
+                      const quem = nomes ? h.barbeiroIds.map((id) => nomes[id]).filter(Boolean) : [];
+                      const textoQuem = quem.length > 2 ? `${quem.length} barbeiros` : quem.join(" ou ");
                       return (
                         <button
                           key={h.inicio}
                           type="button"
                           data-horario
                           aria-pressed={selecionado}
+                          aria-label={textoQuem ? `${h.hora}, com ${textoQuem}` : undefined}
                           onClick={() => onEscolherHorario(h)}
-                          className={`numeros min-h-11 rounded-sm border text-base font-medium transition-colors ${
+                          className={`numeros flex min-h-11 flex-col items-center justify-center rounded-sm border px-1 py-1.5 text-base font-medium transition-colors ${
                             selecionado
                               ? "border-ouro bg-ouro text-sobre-ouro"
                               : "border-borda-forte bg-card text-texto hover:border-ouro-discreto"
                           }`}
                         >
                           {h.hora}
+                          {textoQuem && (
+                            <span
+                              className={`mt-0.5 w-full truncate text-[0.6875rem] font-normal leading-tight ${selecionado ? "text-sobre-ouro" : "text-texto-sec"}`}
+                              aria-hidden
+                            >
+                              {textoQuem}
+                            </span>
+                          )}
                         </button>
                       );
                     })}
