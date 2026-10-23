@@ -46,33 +46,35 @@ export function SeletorHorario(props: Props) {
     { scope: escopo, dependencies: [resultado, carregando] },
   );
 
-  // Passada da navalha: ao tocar num horário, o dourado entra na diagonal com o fio
-  // da lâmina brilhando na frente. Só quando o cliente toca (não ao voltar à etapa).
+  // A maquininha passa por cima do horário tocado e deixa o dourado para trás,
+  // como o corte. Só quando o cliente toca (não ao voltar à etapa).
   const tocado = useRef<string | null>(null);
   useGSAP(
     () => {
       if (!escolhido || tocado.current !== escolhido.inicio) return;
       tocado.current = null;
       const botao = escopo.current?.querySelector<HTMLButtonElement>("[data-horario][aria-pressed='true']");
-      const fundo = botao?.querySelector<HTMLElement>("[data-navalha]");
-      const fio = botao?.querySelector<HTMLElement>("[data-fio]");
-      if (!botao || !fundo || !fio) return;
+      const fundo = botao?.querySelector<HTMLElement>("[data-corte]");
+      const maquina = botao?.querySelector<SVGSVGElement>("[data-maquina]");
+      if (!botao || !fundo || !maquina) return;
 
       const mm = gsap.matchMedia();
       mm.add(COM_MOVIMENTO, () => {
-        const passada = { p: 0 };
+        const largura = botao.offsetWidth;
+        const passada = { cabeca: 0 };
         const desenhar = () => {
-          const x = passada.p * 140;
-          fundo.style.clipPath = `polygon(0 0, ${x}% 0, ${x - 40}% 100%, 0 100%)`;
-          fio.style.left = `${x - 20}%`;
+          fundo.style.clipPath = `inset(0 ${Math.max(0, largura - passada.cabeca)}px 0 0)`;
+          gsap.set(maquina, { x: passada.cabeca });
         };
         desenhar();
         gsap
           .timeline({ onComplete: () => fundo.style.removeProperty("clip-path") })
-          .to(passada, { p: 1, duration: 0.42, ease: "power2.inOut", onUpdate: desenhar }, 0)
-          .fromTo(fio, { opacity: 1 }, { opacity: 0, duration: 0.15 }, 0.3)
-          .from(botao, { color: "#f5f1e8", duration: 0.3, ease: "none" }, 0.08)
-          .fromTo(botao, { scale: 0.95 }, { scale: 1, duration: 0.4, ease: "back.out(2.5)", clearProps: "transform" }, 0);
+          .set(maquina, { opacity: 1 })
+          .to(passada, { cabeca: largura + MAQUINA_LARGURA, duration: 0.6, ease: "power1.inOut", onUpdate: desenhar }, 0)
+          // A máquina vibra enquanto corta.
+          .fromTo(maquina, { y: -0.8 }, { y: 0.8, duration: 0.03, repeat: 19, yoyo: true, ease: "none" }, 0)
+          .from(botao, { color: "#f5f1e8", duration: 0.35, ease: "none" }, 0.15)
+          .set(maquina, { opacity: 0 });
       });
       return () => mm.revert();
     },
@@ -189,12 +191,8 @@ export function SeletorHorario(props: Props) {
                         >
                           {selecionado && (
                             <>
-                              <span data-navalha className="absolute inset-0 bg-ouro" aria-hidden />
-                              <span
-                                data-fio
-                                className="pointer-events-none absolute -inset-y-2 left-[110%] w-0.5 rotate-[22deg] bg-texto opacity-0"
-                                aria-hidden
-                              />
+                              <span data-corte className="absolute inset-0 bg-ouro" aria-hidden />
+                              <Maquina />
                             </>
                           )}
                           <span className="relative">{h.hora}</span>
@@ -217,6 +215,36 @@ export function SeletorHorario(props: Props) {
         )}
       </div>
     </div>
+  );
+}
+
+const MAQUINA_LARGURA = 46;
+
+/**
+ * Maquininha de cortar cabelo vista de cima, com o pente à direita (para onde ela anda).
+ * Começa escondida à esquerda do botão; o GSAP a leva até a direita.
+ */
+function Maquina() {
+  return (
+    <svg
+      data-maquina
+      viewBox="0 0 46 24"
+      width={MAQUINA_LARGURA}
+      height="24"
+      className="pointer-events-none absolute top-1/2 -mt-3 opacity-0"
+      style={{ left: -MAQUINA_LARGURA }}
+      aria-hidden
+    >
+      {/* Corpo */}
+      <rect x="1" y="5" width="32" height="14" rx="7" className="fill-elevado stroke-texto-sec" strokeWidth="1.2" />
+      <rect x="9" y="9.5" width="10" height="5" rx="2.5" className="fill-ouro" />
+      {/* Cabeça e lâmina */}
+      <rect x="31" y="3" width="8" height="18" rx="2" className="fill-texto-sec" />
+      <path d="M39 4.5v15" className="stroke-texto" strokeWidth="1.5" />
+      {[5.5, 8.5, 11.5, 14.5, 17.5].map((y) => (
+        <path key={y} d={`M39.5 ${y}h4.5`} className="stroke-texto" strokeWidth="1.3" strokeLinecap="round" />
+      ))}
+    </svg>
   );
 }
 

@@ -61,7 +61,7 @@ export function FluxoAgendamento({ slug, nomeBarbearia, servicos, barbeiros, fun
   );
 
   function setHorario(h: Horario | null) {
-    if (!h && esperaNavalha.current) clearTimeout(esperaNavalha.current);
+    if (!h && esperaMaquina.current) clearTimeout(esperaMaquina.current);
     setHorarioEscolhido(h);
     setAtendente(null);
   }
@@ -122,22 +122,22 @@ export function FluxoAgendamento({ slug, nomeBarbearia, servicos, barbeiros, fun
     carregarHorarios(dia, servicoId, barbeiroId);
   }
 
-  // Segura a troca de etapa até a passada da navalha no horário terminar.
-  const esperaNavalha = useRef<ReturnType<typeof setTimeout> | null>(null);
-  function irParaDadosDepoisDaNavalha() {
-    if (esperaNavalha.current) clearTimeout(esperaNavalha.current);
+  // Segura a troca de etapa até a maquininha terminar de passar no horário.
+  const esperaMaquina = useRef<ReturnType<typeof setTimeout> | null>(null);
+  function irParaDadosDepoisDaMaquina() {
+    if (esperaMaquina.current) clearTimeout(esperaMaquina.current);
     const reduzir = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    esperaNavalha.current = setTimeout(() => irPara("dados"), reduzir ? 0 : 480);
+    esperaMaquina.current = setTimeout(() => irPara("dados"), reduzir ? 0 : 680);
   }
 
   function escolherHorario(h: Horario) {
     setHorario(h);
-    if (barbeiro !== "qualquer") return irParaDadosDepoisDaNavalha();
+    if (barbeiro !== "qualquer") return irParaDadosDepoisDaMaquina();
     // Qualquer barbeiro: com um só livre, vai ele; com mais de um, o cliente escolhe.
     if (h.barbeiroIds.length === 1) {
       setAtendente(h.barbeiroIds[0]);
-      irParaDadosDepoisDaNavalha();
-    } else if (esperaNavalha.current) clearTimeout(esperaNavalha.current);
+      irParaDadosDepoisDaMaquina();
+    } else if (esperaMaquina.current) clearTimeout(esperaMaquina.current);
   }
 
   function escolherAtendente(id: string) {
