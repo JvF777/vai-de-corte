@@ -407,7 +407,10 @@ function Grade({
                   })}
 
                   {linhaAgora !== null && (
-                    <div className="pointer-events-none absolute inset-x-0 z-20 border-t border-ouro" style={{ top: linhaAgora }} />
+                    // Linha de "agora": passa por baixo dos clientes para não parecer texto riscado.
+                    <div className="pointer-events-none absolute inset-x-0 z-0 h-0.5 -translate-y-1/2 bg-ouro" style={{ top: linhaAgora }}>
+                      <span className="absolute -left-1 top-1/2 size-2 -translate-y-1/2 rounded-full bg-ouro" />
+                    </div>
                   )}
                 </div>
               </div>
