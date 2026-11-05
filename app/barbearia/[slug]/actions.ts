@@ -1,7 +1,9 @@
 "use server";
 
+import { after } from "next/server";
 import { z } from "zod";
 import { calcularHorarios, dataValida, type Horario } from "@/lib/availability";
+import { avisarNovoAgendamento } from "@/lib/push/novo-agendamento";
 import { criarClientePublico } from "@/lib/supabase/publico";
 import { carregarOcupados, carregarVitrine } from "@/lib/vitrine";
 
@@ -135,6 +137,8 @@ export async function agendar(anterior: EstadoAgendamento, formData: FormData): 
 
   const id = (data as { id?: string } | null)?.id;
   if (!id) return { erro: "Não foi possível agendar agora. Tente de novo em instantes.", tentativa };
+  // Notificação no celular do dono e do barbeiro, depois de responder ao cliente.
+  after(() => avisarNovoAgendamento(id));
   // A tela navega sozinha depois da animação do corte.
   return { erro: null, destino: `/barbearia/${d.slug}/agendamento/${id}`, tentativa };
 }

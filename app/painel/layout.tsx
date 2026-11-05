@@ -2,10 +2,14 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { Marca } from "@/components/marca";
+import { metadataApp } from "@/lib/app-instalavel";
 import { ConteudoLateral } from "./_componentes/conteudo-lateral";
 import { MenuMobile } from "./_componentes/menu-mobile";
 
-export const metadata: Metadata = { title: { default: "Painel", template: "%s | Painel | Vai de Corte" } };
+export const metadata: Metadata = {
+  title: { default: "Painel", template: "%s | Painel | Vai de Corte" },
+  ...metadataApp,
+};
 
 export default function LayoutPainel({ children }: LayoutProps<"/painel">) {
   const marca = (

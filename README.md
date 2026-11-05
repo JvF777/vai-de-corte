@@ -100,6 +100,38 @@ Os horários aparecem calculados no servidor na hora em que o cliente escolhe o 
 
 Só o dono vê Serviços, Barbeiros e Barbearia no menu. O agendamento manual usa a RPC `criar_agendamento_manual`, que trava o barbeiro e recusa bloqueios e choque de horário.
 
+## Avisos no celular (Web Push)
+
+Quando um cliente agenda pelo link, o dono da barbearia e o barbeiro do horário recebem uma notificação no celular, igual à de um app: "Novo agendamento: João Silva / Corte com Carlos, amanhã às 15:00". Tocar nela abre a agenda daquele dia. Agendamento manual (feito no painel) não avisa.
+
+**Configurar uma vez (João):**
+
+1. No terminal, dentro da pasta do projeto, rode `npx web-push generate-vapid-keys`. Ele mostra duas chaves: *Public Key* e *Private Key*.
+2. Coloque no `.env.local` (e na Vercel, em Settings > Environment Variables):
+   - `NEXT_PUBLIC_VAPID_PUBLIC_KEY` = a Public Key
+   - `VAPID_PRIVATE_KEY` = a Private Key (essa é secreta: nunca com `NEXT_PUBLIC_`)
+   - `VAPID_SUBJECT` = `mailto:` + seu e-mail
+3. Aplique a migration nova: `npx supabase db push --linked`.
+4. Reinicie o `npm run dev` (ou faça um novo deploy na Vercel).
+
+Gere as chaves uma vez só e use as mesmas no computador e na Vercel. Se trocar depois, todo mundo precisa ligar os avisos de novo.
+
+**Cada barbeiro, no celular:**
+
+- **Android (Chrome):** abrir o painel, menu, "Ligar avisos" e tocar em Permitir. Dá para instalar na tela inicial pelo menu do Chrome ("Instalar app"), mas não é obrigatório.
+- **iPhone (iOS 16.4 ou mais novo):** abrir o painel no Safari, tocar em Compartilhar > "Adicionar à Tela de Início", abrir o Vai de Corte pelo ícone novo e só então "Ligar avisos". No Safari comum o iPhone não deixa.
+- O botão "Testar" manda um aviso na hora para conferir.
+
+Precisa de HTTPS (a Vercel já tem; no computador, `localhost` também funciona).
+
+| Arquivo | O que faz |
+| --- | --- |
+| `public/sw.js` | Service worker: mostra a notificação e abre a agenda ao tocar. Não guarda páginas em cache |
+| `public/manifest.webmanifest` e `public/icones/` | Deixam o painel instalável como app (nome, ícone, cor) |
+| `app/painel/_componentes/avisos-celular.tsx` | Caixa "Avisos no celular" no menu do painel: ligar, testar e desligar neste aparelho |
+| `lib/push/` | Texto do aviso (`mensagem.ts`, com testes), envio assinado com VAPID (`envio.ts`) e o aviso de agendamento novo (`novo-agendamento.ts`) |
+| `supabase/migrations/20261105000001_avisos_push.sql` | Tabela `inscricoes_push` (um aparelho por linha, cada um só vê os seus) e as RPCs de salvar, buscar destinatários e limpar aparelhos expirados |
+
 ## Design system
 
 Tema escuro com dourado champanhe, Manrope nos títulos e Inter na interface.
