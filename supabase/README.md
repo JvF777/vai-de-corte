@@ -11,6 +11,7 @@ Etapa 1 do projeto: modelo de dados, migrations, RLS e seed.
 | `migrations/20261020000003_rls.sql` | Funções auxiliares de permissão, grants e todas as políticas de RLS |
 | `migrations/20261020000004_agendamento_publico.sql` | RPCs do link público: `horarios_ocupados`, `criar_agendamento_publico`, `consultar_agendamento_publico` |
 | `migrations/20261023000001_painel.sql` | Painel: RPC `criar_agendamento_manual` e o bucket público `barbearias` no Storage (logo e fotos), com escrita só do dono |
+| `migrations/20261105000002_cadastro_barbearia.sql` | Cadastro pelo próprio dono: RPCs `slug_disponivel` e `criar_barbearia` |
 | `seed.sql` | Duas barbearias **fictícias** (`ficticia-navalha-de-ouro` e `ficticia-corte-fino`) com serviços, barbeiros, horários, clientes e agendamentos de exemplo |
 | `scripts/vincular_usuario.sql` | Liga um usuário do Auth a uma barbearia como dono ou barbeiro |
 | `tests/*.test.sql` | Testes pgTAP: isolamento entre barbearias, permissões por papel e regras de agendamento |
@@ -48,7 +49,7 @@ Decisões que valem para o app:
 | bloqueios | só via RPC (sem motivo) | os seus | todos, inclusive da barbearia inteira |
 | equipe (`barbearia_usuarios`) | não | vê o próprio vínculo | gerencia, mas não remove nem rebaixa a si mesmo |
 
-Criar ou apagar barbearia fica com a plataforma (seed/script com service_role).
+Criar barbearia: o usuário logado usa a RPC `criar_barbearia` (vira dono; até 3 por conta). Apagar barbearia fica com a plataforma (service_role).
 
 ## RPCs do link público
 
@@ -64,6 +65,13 @@ Erros vêm com `message` = código estável e `details` = texto em português:
 ## RPC do painel
 
 - `criar_agendamento_manual(p_barbearia_id, p_barbeiro_id, p_servico_id, p_inicio, p_nome, p_whatsapp, p_observacoes)`: só para usuário logado (dono para qualquer barbeiro, barbeiro só para si). Não exige grade nem expediente (encaixe), aceita até 30 min no passado, nasce `confirmado` com origem `manual`. Recusa bloqueio (`HORARIO_BLOQUEADO`), outro cliente no horário (`HORARIO_INDISPONIVEL`) e falta de permissão (`SEM_PERMISSAO`).
+
+## RPCs do cadastro
+
+Só para usuário logado:
+
+- `slug_disponivel(p_slug)`: o link está livre e no formato certo? (recusa reservados como `admin`, `painel` e `ficticia-*`).
+- `criar_barbearia(p_nome, p_slug, p_whatsapp, p_cidade, p_uf, p_endereco, p_horarios, p_servicos, p_barbeiros)`: cria a barbearia, o vínculo de dono, o funcionamento, os serviços e os barbeiros numa transação. Cada barbeiro faz todos os serviços no horário da barbearia; o marcado com `sou_eu` fica ligado ao login do dono. Erros: `NAO_AUTENTICADO`, `LIMITE_BARBEARIAS`, `DADOS_INVALIDOS`, `SLUG_INVALIDO`, `SLUG_EM_USO`.
 
 ## Storage
 

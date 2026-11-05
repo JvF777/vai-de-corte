@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { supabaseEnv } from "./env";
 
 const ROTAS_PROTEGIDAS = ["/painel"];
-const ROTAS_SO_DESLOGADO = ["/login"];
+const ROTAS_SO_DESLOGADO = ["/login", "/cadastro"];
 
 function comecaCom(pathname: string, rotas: string[]) {
   return rotas.some((r) => pathname === r || pathname.startsWith(`${r}/`));
