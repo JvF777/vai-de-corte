@@ -21,7 +21,9 @@ Abra o `.env.local` e preencha com os dados do projeto no Supabase:
 | `NEXT_PUBLIC_SUPABASE_URL` | Project Settings > Data API > Project URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Project Settings > API Keys > Publishable key (`sb_publishable_...`). A chave `anon` antiga também funciona. |
 
-Nunca use a `service_role` / secret key no `.env.local`: tudo que começa com `NEXT_PUBLIC_` vai para o navegador.
+| `SUPABASE_SECRET_KEY` | Project Settings > API Keys > Secret keys (`sb_secret_...`). Só para os avisos no celular; sem ela o resto funciona. |
+
+Tudo que começa com `NEXT_PUBLIC_` vai para o navegador. A chave secreta (`SUPABASE_SECRET_KEY`, ou a `service_role` antiga) **nunca** pode ter esse prefixo, nem ir para o GitHub ou para print: ela ignora o RLS. Só `lib/supabase/admin.ts` usa essa chave, no servidor.
 
 ```bash
 npm run dev
@@ -119,6 +121,7 @@ Quando um cliente agenda pelo link, o dono da barbearia e o barbeiro do horário
    - `NEXT_PUBLIC_VAPID_PUBLIC_KEY` = a Public Key
    - `VAPID_PRIVATE_KEY` = a Private Key (essa é secreta: nunca com `NEXT_PUBLIC_`)
    - `VAPID_SUBJECT` = `mailto:` + seu e-mail
+   - `SUPABASE_SECRET_KEY` = a chave secreta do Supabase (Project Settings > API Keys > Secret keys). Só o servidor consegue ler quais aparelhos recebem o aviso.
 3. Aplique a migration nova: `npx supabase db push --linked`.
 4. Reinicie o `npm run dev` (ou faça um novo deploy na Vercel).
 
@@ -139,6 +142,22 @@ Precisa de HTTPS (a Vercel já tem; no computador, `localhost` também funciona)
 | `app/painel/_componentes/avisos-celular.tsx` | Caixa "Avisos no celular" no menu do painel: ligar, testar e desligar neste aparelho |
 | `lib/push/` | Texto do aviso (`mensagem.ts`, com testes), envio assinado com VAPID (`envio.ts`) e o aviso de agendamento novo (`novo-agendamento.ts`) |
 | `supabase/migrations/20261105000001_avisos_push.sql` | Tabela `inscricoes_push` (um aparelho por linha, cada um só vê os seus) e as RPCs de salvar, buscar destinatários e limpar aparelhos expirados |
+
+## Segurança
+
+Resumo do que protege o sistema (auditoria de 2026-11-09):
+
+- **RLS em todas as tabelas.** Cada barbearia só enxerga os próprios dados (`barbearia_id` + funções `privado.eh_membro`/`eh_dono`). O visitante do link lê só o catálogo e usa RPCs que validam tudo no banco. Testes em `supabase/tests` (rodar com `npx supabase@2 test db`).
+- **Sem SQL injection.** O app só fala com o banco pelo `supabase-js` (parâmetros, nunca texto colado em SQL) e as funções do banco não montam SQL dinâmico. Todas as funções `security definer` têm `search_path` vazio.
+- **Chaves.** No navegador só vão a URL, a chave publishable e a chave pública VAPID. `SUPABASE_SECRET_KEY` e `VAPID_PRIVATE_KEY` ficam só no servidor (`server-only`). `.env.local` está no `.gitignore`.
+- **Link público.** No máximo 3 agendamentos futuros por WhatsApp e 15 agendamentos novos pelo link a cada 10 minutos por barbearia.
+- **Cabeçalhos.** O site não abre dentro de iframe de outro site (`frame-ancestors 'none'`) e manda `nosniff`, `Referrer-Policy` e HSTS.
+
+Ajustes que ficam no painel do Supabase (não dá para fazer pelo código):
+
+- **Authentication > Sign In / Providers > Email**: senha mínima de **8** caracteres.
+- **Authentication > Rate Limits**: deixe os limites padrão (não aumente).
+- **Advisors > Security Advisor**: rode de vez em quando e resolva o que aparecer em vermelho.
 
 ## Design system
 

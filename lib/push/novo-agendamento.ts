@@ -1,6 +1,5 @@
 import "server-only";
-import { createClient } from "@supabase/supabase-js";
-import { supabaseEnv } from "@/lib/supabase/env";
+import { criarClienteAdmin } from "@/lib/supabase/admin";
 import { enviarAviso, pushConfigurado, type Inscricao } from "./envio";
 import { avisoNovoAgendamento } from "./mensagem";
 
@@ -21,11 +20,13 @@ type Destinatarios = {
 export async function avisarNovoAgendamento(agendamentoId: string) {
   if (!pushConfigurado()) return;
   try {
-    // Roda dentro de after(), depois da resposta: sem connection(), então o cliente é criado aqui.
-    const { url, chave } = supabaseEnv();
-    const supabase = createClient(url, chave, {
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-    });
+    // Roda dentro de after(), depois da resposta. Os aparelhos só saem com a chave
+    // secreta (servidor): o visitante não consegue pedir os aparelhos do dono.
+    const supabase = criarClienteAdmin();
+    if (!supabase) {
+      console.warn("Web Push: falta SUPABASE_SECRET_KEY no servidor, aviso não enviado.");
+      return;
+    }
     const { data, error } = await supabase.rpc("destinatarios_aviso_agendamento", { p_agendamento_id: agendamentoId });
     if (error) throw error;
     const d = data as Destinatarios | null;
