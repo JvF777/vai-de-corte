@@ -4,13 +4,16 @@
  */
 
 import {
+  calcularHorarios,
   diaDaSemana,
   horaParaMinutos,
   instanteLocal,
   paraLocal,
   somarDias,
   type Funcionamento,
+  type Horario,
   type Jornada,
+  type Ocupado,
 } from "@/lib/availability";
 
 export type Status = "agendado" | "confirmado" | "concluido" | "cancelado" | "falta";
@@ -147,4 +150,31 @@ export function resumirDias(dias: number[]): string {
   const seguidos = indices.every((v, i) => i === 0 || v === indices[i - 1] + 1);
   if (seguidos && ordem.length >= 3) return `${ordem[0].curto} a ${ordem[ordem.length - 1].curto}`;
   return ordem.map((d) => d.curto).join(", ");
+}
+
+/**
+ * Horários vagos de um barbeiro no dia, na grade do intervalo da barbearia, para os atalhos de "tocar e marcar".
+ * Usa a mesma regra do link (calcularHorarios) com um "serviço" do tamanho de um intervalo, sem antecedência mínima.
+ */
+export function horariosVagos(entrada: {
+  data: string;
+  barbeiroId: string;
+  jornada: Jornada | null;
+  funcionamento: Funcionamento[];
+  intervalo: number;
+  ocupados: Ocupado[];
+  agora: Date;
+}): Horario[] {
+  if (!entrada.jornada) return [];
+  return calcularHorarios({
+    data: entrada.data,
+    servicoId: "vago",
+    duracaoMinutos: entrada.intervalo,
+    barbeiroId: entrada.barbeiroId,
+    barbeiros: [{ id: entrada.barbeiroId, servicoIds: ["vago"], jornadas: [entrada.jornada] }],
+    funcionamento: entrada.funcionamento,
+    ocupados: entrada.ocupados,
+    regras: { intervaloMinutos: entrada.intervalo, antecedenciaMinutos: 0, janelaDias: 366 },
+    agora: entrada.agora,
+  });
 }
