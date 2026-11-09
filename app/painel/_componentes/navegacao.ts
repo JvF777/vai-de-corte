@@ -1,4 +1,4 @@
-import { CalendarDays, LayoutDashboard, Scissors, Settings, UserRound, Users } from "lucide-react";
+import { CalendarDays, LayoutDashboard, Scissors, Settings, UserRound, Users, Wallet } from "lucide-react";
 
 export type ItemNavegacao = {
   rotulo: string;
@@ -13,6 +13,7 @@ export type ItemNavegacao = {
 export const NAVEGACAO: ItemNavegacao[] = [
   { rotulo: "Visão geral", href: "/painel", Icone: LayoutDashboard },
   { rotulo: "Agenda", href: "/painel/agenda", Icone: CalendarDays },
+  { rotulo: "Ganhos", href: "/painel/ganhos", Icone: Wallet },
   { rotulo: "Serviços", href: "/painel/servicos", Icone: Scissors, soDono: true },
   { rotulo: "Barbeiros", href: "/painel/barbeiros", Icone: UserRound, soDono: true },
   { rotulo: "Barbearia", href: "/painel/barbearia", Icone: Settings, soDono: true },
