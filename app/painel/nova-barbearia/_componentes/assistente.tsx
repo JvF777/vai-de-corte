@@ -1,12 +1,13 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
-import { ArrowLeft, ArrowRight, Check, CircleAlert, LoaderCircle, Plus, Store, Trash2 } from "lucide-react";
+import { startTransition, useActionState, useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type ReactNode } from "react";
+import { ArrowLeft, ArrowRight, Check, CircleAlert, Info, LoaderCircle, Plus, Store, Trash2 } from "lucide-react";
 import { Revelar } from "@/components/animacao/revelar";
 import { Aviso } from "@/components/ui/aviso";
 import { Botao } from "@/components/ui/botao";
 import { Caixa } from "@/components/ui/caixa";
 import { Campo } from "@/components/ui/campo";
+import { CampoPreco } from "@/components/ui/campo-preco";
 import { Painel } from "@/components/ui/painel";
 import { Selecao } from "@/components/ui/selecao";
 import { DURACOES, gerarSlug, MAX_BARBEIROS, MAX_SERVICOS, passoDoCampo } from "@/lib/cadastro";
@@ -27,6 +28,15 @@ const HORARIO_INICIAL: Partial<Record<number, HorarioDia>> = Object.fromEntries(
 );
 
 type Linha = { id: number; nome?: string; preco?: string; duracao?: number };
+/** Serviço como está na tela: id da linha (estável), posição da linha no formulário e nome. */
+type ServicoNaTela = { id: number; linha: number; nome: string };
+
+function lerServicosDaTela(form: HTMLFormElement): ServicoNaTela[] {
+  return Array.from(form.querySelectorAll<HTMLElement>("[data-servico-linha]")).flatMap((li, linha) => {
+    const nome = li.querySelector<HTMLInputElement>('input[name="servico_nome"]')?.value.trim() ?? "";
+    return nome ? [{ id: Number(li.dataset.servicoLinha), linha, nome }] : [];
+  });
+}
 
 const estadoInicial: EstadoNovaBarbearia = { erro: null, tentativa: 0 };
 const semAssinatura = () => () => {};
@@ -47,7 +57,11 @@ export function Assistente({ nomeDono }: { nomeDono: string }) {
     setPasso(Math.min(...chaves.map(passoDoCampo)));
   }, [estado]);
 
+  // Serviços do passo 3, lidos da tela ao entrar no passo 4 (para marcar quem faz o quê).
+  const [servicosAtuais, setServicosAtuais] = useState<ServicoNaTela[]>([]);
+
   function irPara(novo: number) {
+    if (novo === 3 && formulario.current) setServicosAtuais(lerServicosDaTela(formulario.current));
     setPasso(novo);
     requestAnimationFrame(() => {
       titulo.current?.focus({ preventScroll: true });
@@ -111,7 +125,18 @@ export function Assistente({ nomeDono }: { nomeDono: string }) {
             <CircleAlert className="size-4" aria-hidden />
             {campos.horarios ?? "Marque pelo menos um dia em que a barbearia abre."}
           </p>
-          <p className="mt-4 text-label text-texto-disc">Horário de almoço e folgas de cada barbeiro ficam em Barbeiros, depois.</p>
+          <Explicacao titulo="Como funcionam esses horários">
+            <li>Marque os dias em que a barbearia abre e o horário de abrir e de fechar.</li>
+            <li>O cliente só consegue marcar dentro desse horário, de 30 em 30 minutos.</li>
+            <li>Todos os barbeiros começam trabalhando nesse mesmo horário.</li>
+            <li>
+              Almoço, folga fixa de um barbeiro (por exemplo, toda segunda) e férias você ajusta depois em{" "}
+              <strong className="font-medium text-texto">Painel &gt; Barbeiros</strong>, tocando no nome do barbeiro.
+            </li>
+            <li>
+              Feriado ou um dia que vai fechar: <strong className="font-medium text-texto">Agenda &gt; Bloquear horário</strong>.
+            </li>
+          </Explicacao>
         </fieldset>
 
         <fieldset ref={(el) => void (passos.current[2] = el)} hidden={passo !== 2} className="min-w-0">
@@ -121,7 +146,7 @@ export function Assistente({ nomeDono }: { nomeDono: string }) {
 
         <fieldset ref={(el) => void (passos.current[3] = el)} hidden={passo !== 3} className="min-w-0">
           <legend className="sr-only">{PASSOS[3].titulo}</legend>
-          <PassoBarbeiros campos={campos} nomeDono={nomeDono} />
+          <PassoBarbeiros campos={campos} nomeDono={nomeDono} servicos={servicosAtuais} />
         </fieldset>
 
         {estado.erro && !pendente && (
@@ -302,10 +327,10 @@ function PassoServicos({ campos }: { campos: Record<string, string> }) {
     <div className="flex flex-col gap-4">
       <ul className="flex flex-col gap-4">
         {linhas.map((l, i) => (
-          <li key={l.id}>
-            <Revelar className="grid gap-3 rounded-sm border border-borda bg-superficie p-4 sm:grid-cols-[minmax(0,1fr)_8rem_9.5rem_auto] sm:items-start">
+          <li key={l.id} data-servico-linha={l.id}>
+            <Revelar className="grid gap-3 rounded-sm border border-borda bg-superficie p-4 sm:grid-cols-[minmax(0,1fr)_9rem_9.5rem_auto] sm:items-start">
               <Campo rotulo="Serviço" name="servico_nome" required minLength={2} maxLength={80} defaultValue={l.nome} placeholder="Ex.: Corte degradê" erro={campos[`servico_nome_${i}`]} />
-              <Campo rotulo="Preço (R$)" name="servico_preco" required inputMode="decimal" pattern="(R\$\s?)?[\d.]+(,\d{1,2})?" defaultValue={l.preco} placeholder="40,00" erro={campos[`servico_preco_${i}`]} />
+              <CampoPreco rotulo="Preço" name="servico_preco" required pattern="(R\$\s?)?[\d.]+(,\d{1,2})?" defaultValue={l.preco} placeholder="40,00" erro={campos[`servico_preco_${i}`]} />
               <Selecao rotulo="Duração" name="servico_duracao" defaultValue={l.duracao ?? 30} erro={campos[`servico_duracao_${i}`]}>
                 {DURACOES.map((d) => (
                   <option key={d} value={d}>
@@ -340,7 +365,14 @@ function PassoServicos({ campos }: { campos: Record<string, string> }) {
           Adicionar serviço
         </Botao>
       )}
-      <p className="text-label text-texto-disc">Descrição de cada serviço e quem faz o quê ficam em Serviços, depois.</p>
+      <Explicacao titulo="Como funcionam os serviços">
+        <li>O nome e o preço aparecem para o cliente no link de agendamento.</li>
+        <li>A duração é quanto tempo a agenda do barbeiro fica ocupada. Um corte de 30 min marcado às 10h libera o horário às 10h30.</li>
+        <li>
+          Descrição de cada serviço e quais barbeiros fazem cada um você muda depois em{" "}
+          <strong className="font-medium text-texto">Painel &gt; Serviços</strong>.
+        </li>
+      </Explicacao>
     </div>
   );
 }
@@ -348,7 +380,15 @@ function PassoServicos({ campos }: { campos: Record<string, string> }) {
 // ---------------------------------------------------------------------------
 // Passo 4: barbeiros
 // ---------------------------------------------------------------------------
-function PassoBarbeiros({ campos, nomeDono }: { campos: Record<string, string>; nomeDono: string }) {
+function PassoBarbeiros({
+  campos,
+  nomeDono,
+  servicos,
+}: {
+  campos: Record<string, string>;
+  nomeDono: string;
+  servicos: ServicoNaTela[];
+}) {
   const proximo = useRef(2);
   const [souBarbeiro, setSouBarbeiro] = useState(true);
   const [linhas, setLinhas] = useState<Linha[]>([{ id: 1, nome: nomeDono }]);
@@ -363,35 +403,63 @@ function PassoBarbeiros({ campos, nomeDono }: { campos: Record<string, string>; 
         rotulo="Eu também corto cabelo aqui"
         dica="Você vira o primeiro barbeiro e vê a sua própria agenda no painel."
       />
+      {servicos.length > 0 && <input type="hidden" name="escolhe_servicos" value="sim" />}
       <ul className="flex flex-col gap-3">
         {linhas.map((l, i) => {
           const ehVoce = souBarbeiro && i === 0;
+          const erroServicos = campos[`barbeiro_servicos_${i}`];
           return (
-            <li key={l.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
-              <Campo
-                rotulo={ehVoce ? "Seu nome como barbeiro" : `Barbeiro ${i + 1}`}
-                name="barbeiro_nome"
-                required
-                minLength={2}
-                maxLength={80}
-                defaultValue={l.nome}
-                placeholder="Ex.: Carlos"
-                erro={campos[`barbeiro_nome_${i}`]}
-              />
-              <Botao
-                type="button"
-                variante="fantasma"
-                className="mt-[1.6rem]"
-                aria-label={`Remover barbeiro ${i + 1}`}
-                icone={<Trash2 aria-hidden />}
-                disabled={linhas.length === 1}
-                onClick={() => setLinhas((ls) => ls.filter((x) => x.id !== l.id))}
-              />
+            <li key={l.id} className="rounded-sm border border-borda bg-superficie p-4">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                <Campo
+                  rotulo={ehVoce ? "Seu nome como barbeiro" : `Barbeiro ${i + 1}`}
+                  name="barbeiro_nome"
+                  required
+                  minLength={2}
+                  maxLength={80}
+                  defaultValue={l.nome}
+                  placeholder="Ex.: Carlos"
+                  erro={campos[`barbeiro_nome_${i}`]}
+                />
+                <Botao
+                  type="button"
+                  variante="fantasma"
+                  className="mt-[1.6rem]"
+                  aria-label={`Remover barbeiro ${i + 1}`}
+                  icone={<Trash2 aria-hidden />}
+                  disabled={linhas.length === 1}
+                  onClick={() => setLinhas((ls) => ls.filter((x) => x.id !== l.id))}
+                />
+              </div>
+              {servicos.length > 0 && (
+                <fieldset className="mt-4 min-w-0">
+                  <legend className="text-label font-medium text-texto-sec">{ehVoce ? "Serviços que você faz" : "Serviços que faz"}</legend>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {servicos.map((s) => (
+                      <label key={`${l.id}-${s.id}`} className="cursor-pointer">
+                        <input
+                          type="checkbox"
+                          name={`barbeiro_servicos_${i}`}
+                          value={s.linha}
+                          defaultChecked
+                          className="peer sr-only"
+                        />
+                        <span className="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-borda-campo px-3.5 text-base text-texto-sec transition-colors hover:border-texto-disc peer-checked:border-ouro peer-checked:bg-ouro/10 peer-checked:text-texto peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ouro [&>svg]:hidden peer-checked:[&>svg]:block">
+                          <Check className="size-3.5 text-ouro" aria-hidden />
+                          {s.nome}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  {erroServicos && <p className="mt-2 text-label text-erro">{erroServicos}</p>}
+                </fieldset>
+              )}
             </li>
           );
         })}
       </ul>
       {campos.barbeiros && <p className="text-label text-erro">{campos.barbeiros}</p>}
+      {campos.barbeiros_cobertura && <p className="text-label text-erro">{campos.barbeiros_cobertura}</p>}
       {linhas.length < MAX_BARBEIROS && (
         <Botao
           type="button"
@@ -403,9 +471,31 @@ function PassoBarbeiros({ campos, nomeDono }: { campos: Record<string, string>; 
           Adicionar barbeiro
         </Botao>
       )}
-      <p className="text-label text-texto-disc">
-        Todos começam fazendo todos os serviços, no horário da barbearia. Foto e folgas de cada um você muda em Barbeiros.
+      <Explicacao titulo="Como funciona a equipe">
+        <li>Cada barbeiro tem a própria agenda. O cliente escolhe com quem quer cortar, ou &quot;qualquer um disponível&quot;.</li>
+        <li>
+          Toque num serviço para tirar ou pôr. Se um barbeiro não faz luzes, por exemplo, desmarque: o cliente que escolher
+          luzes não vai ver esse barbeiro.
+        </li>
+        <li>Todos trabalham no horário da barbearia.</li>
+        <li>
+          Foto, apresentação, almoço e folgas de cada um você muda depois em{" "}
+          <strong className="font-medium text-texto">Painel &gt; Barbeiros</strong>.
+        </li>
+      </Explicacao>
+    </div>
+  );
+}
+
+/** Caixa de ajuda de cada passo: o que o campo significa e onde ajustar depois. */
+function Explicacao({ titulo, children }: { titulo: string; children: ReactNode }) {
+  return (
+    <div className="mt-6 rounded-sm border border-borda bg-superficie p-4 sm:p-5">
+      <p className="flex items-center gap-2 font-medium text-texto">
+        <Info className="size-4 shrink-0 text-ouro" aria-hidden />
+        {titulo}
       </p>
+      <ul className="mt-3 flex list-disc flex-col gap-2 pl-5 text-label text-texto-sec marker:text-ouro-discreto">{children}</ul>
     </div>
   );
 }
