@@ -512,8 +512,8 @@ function Lista({ data, barbeiros, ativos, bloqueios, vagos, aoAbrirAgendamento, 
                       {/* Celular estreito: o selo desce para baixo do nome, para o nome do cliente caber. */}
                       <span className="numeros row-span-2 self-start font-medium min-[400px]:row-span-1 min-[400px]:self-center">{formatarHora(a.inicio)}</span>
                       <span className="min-w-0">
-                        <span className="block truncate font-medium text-texto">{a.cliente.nome}</span>
-                        <span className="block truncate text-label text-texto-sec">{a.servico.nome}</span>
+                        <span className="block break-words font-medium text-texto">{a.cliente.nome}</span>
+                        <span className="block break-words text-label text-texto-sec">{a.servico.nome}</span>
                       </span>
                       <span className="col-start-2 min-[400px]:col-start-auto">
                         <SeloStatus valor={a.status} />

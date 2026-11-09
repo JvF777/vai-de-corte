@@ -369,8 +369,8 @@ function Atendimentos({ itens, nomes }: { itens: AgendamentoGanho[]; nomes: Map<
               <li key={a.id} className="grid grid-cols-[3.25rem_minmax(0,1fr)_auto] items-center gap-x-3 px-5 py-3 sm:px-6">
                 <span className="numeros text-texto-sec">{formatarHora(a.inicio)}</span>
                 <div className="min-w-0">
-                  <p className="truncate text-texto">{a.clienteNome}</p>
-                  <p className="truncate text-label text-texto-sec">
+                  <p className="break-words text-texto">{a.clienteNome}</p>
+                  <p className="break-words text-label text-texto-sec">
                     {a.servico.nome}
                     {nomes ? ` · ${nomes.get(a.barbeiroId) ?? ""}` : ""}
                   </p>
