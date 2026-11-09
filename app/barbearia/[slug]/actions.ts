@@ -128,7 +128,12 @@ export async function agendar(anterior: EstadoAgendamento, formData: FormData): 
     if (ERROS_HORARIO.has(codigo)) {
       return { erro: texto ?? "Esse horário não está mais disponível. Escolha outro.", horarioPerdido: true, tentativa };
     }
-    if (codigo === "DADOS_INVALIDOS" || codigo === "LIMITE_AGENDAMENTOS" || codigo === "SERVICO_INVALIDO") {
+    if (
+      codigo === "DADOS_INVALIDOS" ||
+      codigo === "LIMITE_AGENDAMENTOS" ||
+      codigo === "MUITOS_AGENDAMENTOS" ||
+      codigo === "SERVICO_INVALIDO"
+    ) {
       return { erro: texto ?? "Confira os dados e tente de novo.", tentativa };
     }
     console.error("criar_agendamento_publico", error);
