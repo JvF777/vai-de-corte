@@ -3,6 +3,7 @@ import { LogOut } from "lucide-react";
 import { obterContextoPainel } from "@/lib/auth";
 import { BotaoEnviar } from "@/components/ui/botao-enviar";
 import { sair } from "../actions";
+import { AvisosCelular } from "./avisos-celular";
 import { ListaNavegacao } from "./lista-navegacao";
 import { SeletorBarbearia } from "./seletor-barbearia";
 
@@ -16,7 +17,8 @@ export function ConteudoLateral() {
       <Suspense fallback={<div className="h-72 rounded-sm" aria-hidden />}>
         <Navegacao />
       </Suspense>
-      <div className="mt-auto">
+      <div className="mt-auto flex flex-col gap-4">
+        <AvisosCelular />
         <Suspense fallback={<div className="h-24 rounded-sm bg-elevado" />}>
           <Usuario />
         </Suspense>

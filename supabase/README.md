@@ -11,6 +11,7 @@ Etapa 1 do projeto: modelo de dados, migrations, RLS e seed.
 | `migrations/20261020000003_rls.sql` | Funções auxiliares de permissão, grants e todas as políticas de RLS |
 | `migrations/20261020000004_agendamento_publico.sql` | RPCs do link público: `horarios_ocupados`, `criar_agendamento_publico`, `consultar_agendamento_publico` |
 | `migrations/20261023000001_painel.sql` | Painel: RPC `criar_agendamento_manual` e o bucket público `barbearias` no Storage (logo e fotos), com escrita só do dono |
+| `migrations/20261105000001_avisos_push.sql` | Avisos no celular: tabela `inscricoes_push` e RPCs `salvar_inscricao_push`, `destinatarios_aviso_agendamento`, `descartar_inscricoes_push` |
 | `migrations/20261105000002_cadastro_barbearia.sql` | Cadastro pelo próprio dono: RPCs `slug_disponivel` e `criar_barbearia` |
 | `seed.sql` | Duas barbearias **fictícias** (`ficticia-navalha-de-ouro` e `ficticia-corte-fino`) com serviços, barbeiros, horários, clientes e agendamentos de exemplo |
 | `scripts/vincular_usuario.sql` | Liga um usuário do Auth a uma barbearia como dono ou barbeiro |
@@ -65,6 +66,12 @@ Erros vêm com `message` = código estável e `details` = texto em português:
 ## RPC do painel
 
 - `criar_agendamento_manual(p_barbearia_id, p_barbeiro_id, p_servico_id, p_inicio, p_nome, p_whatsapp, p_observacoes)`: só para usuário logado (dono para qualquer barbeiro, barbeiro só para si). Não exige grade nem expediente (encaixe), aceita até 30 min no passado, nasce `confirmado` com origem `manual`. Recusa bloqueio (`HORARIO_BLOQUEADO`), outro cliente no horário (`HORARIO_INDISPONIVEL`) e falta de permissão (`SEM_PERMISSAO`).
+
+## Avisos no celular (Web Push)
+
+- `inscricoes_push`: um aparelho por linha, ligado ao usuário. Cada um só lê e apaga os seus (RLS). Gravar é só pela RPC `salvar_inscricao_push(...)`, que exige login e vínculo com alguma barbearia; se o mesmo navegador já era de outra pessoa, passa para quem está logado.
+- `destinatarios_aviso_agendamento(p_agendamento_id)`: chamada pelo servidor logo depois de um agendamento pelo link. Devolve os dados do aviso e os aparelhos do dono e do barbeiro do horário. Só responde uma vez por agendamento (marca `agendamentos.aviso_push_em`), só nos primeiros 10 minutos e nunca para agendamento manual. O endereço do aparelho sozinho não permite mandar aviso: o envio é assinado com a chave VAPID privada, que fica só no servidor.
+- `descartar_inscricoes_push(p_endpoints)`: apaga aparelhos que o serviço de push disse que não existem mais.
 
 ## RPCs do cadastro
 

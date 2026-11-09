@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Revelar } from "@/components/animacao/revelar";
 import { Marca } from "@/components/marca";
+import { metadataApp } from "@/lib/app-instalavel";
 import { GradeHorarios } from "@/components/vitrine/grade-horarios";
 import { FormularioLogin } from "./formulario-login";
 
-export const metadata: Metadata = { title: "Entrar" };
+export const metadata: Metadata = { title: "Entrar", ...metadataApp };
 
 export default function PaginaLogin() {
   return (
