@@ -29,39 +29,47 @@ npm run dev
 
 Abra http://localhost:3000.
 
-## Criar o primeiro login (dono de teste)
+## Cadastro de barbearias (sem SQL)
 
-Ainda não existe tela de cadastro: os usuários do painel são criados pelo Supabase.
+Qualquer dono de barbearia se cadastra sozinho:
 
-1. No Supabase, vá em **Authentication > Users > Add user > Create new user**.
-2. Preencha e-mail e senha (mínimo 6 caracteres), deixe marcado **Auto Confirm User** e clique em **Create user**.
-3. Vá em **SQL Editor > New query**, cole o SQL abaixo trocando o e-mail e clique em **Run**:
+1. Na página inicial, **Cadastrar minha barbearia** leva para `/cadastro` (nome, e-mail e senha).
+2. Depois de criar a conta, o painel abre o assistente `/painel/nova-barbearia`, em 4 passos: dados e link (`/barbearia/<slug>`, com aviso se já estiver em uso), dias e horários, serviços com preço e duração, e quem atende ("Eu também corto cabelo aqui" liga o dono ao primeiro barbeiro).
+3. Ao terminar, a RPC `criar_barbearia` cria tudo numa transação só e o painel abre já na barbearia nova, com o link pronto para agendar. Logo, fotos, almoço e folgas ficam nas telas de sempre.
 
-   ```sql
-   insert into public.barbearia_usuarios (barbearia_id, usuario_id, papel)
-   select b.id, u.id, 'dono'
-     from public.barbearias b, auth.users u
-    where b.slug = 'ficticia-navalha-de-ouro'
-      and u.email = 'seu-email@exemplo.com'
-   on conflict (barbearia_id, usuario_id) do update set papel = excluded.papel;
-   ```
+Configuração necessária no Supabase (**Authentication > Sign In / Providers > Email**):
 
-   Deve aparecer `Success. 1 row affected` (ou `INSERT 0 1`). Se aparecer `0 rows`, o e-mail ou o slug está errado.
-4. Entre em http://localhost:3000/login com esse e-mail e senha. O painel mostra o nome da barbearia e as contagens.
+- **Allow new users to sign up**: ligado (senão ninguém consegue criar conta).
+- **Confirm email**: desligado no MVP. O e-mail padrão do Supabase só entrega para os e-mails do seu time e tem limite de poucos por hora, então um dono de verdade não receberia o link. Se um dia ligar, configure um SMTP próprio e coloque `https://SEU-SITE/auth/confirmar` em **Authentication > URL Configuration > Redirect URLs** (a rota já trata o link).
+
+Limite: cada conta cadastra até 3 barbearias (para evitar abuso).
+
+### Barbearias fictícias do seed (teste)
+
+Para usar a `ficticia-navalha-de-ouro` do seed, crie o usuário em **Authentication > Users > Add user** (com **Auto Confirm User**) e rode no **SQL Editor**, trocando o e-mail:
+
+```sql
+insert into public.barbearia_usuarios (barbearia_id, usuario_id, papel)
+select b.id, u.id, 'dono'
+  from public.barbearias b, auth.users u
+ where b.slug = 'ficticia-navalha-de-ouro'
+   and u.email = 'seu-email@exemplo.com'
+on conflict (barbearia_id, usuario_id) do update set papel = excluded.papel;
+```
 
 O mesmo SQL, com a versão para barbeiro, está em [`supabase/scripts/vincular_usuario.sql`](supabase/scripts/vincular_usuario.sql).
-
-Recomendado: em **Authentication > Sign In / Providers**, desligue **Allow new users to sign up**. Assim ninguém cria conta sozinho pela API; só você, pelo painel do Supabase.
 
 ## Como o login funciona
 
 | Arquivo | O que faz |
 | --- | --- |
-| `proxy.ts` + `lib/supabase/proxy.ts` | Roda antes de `/painel` e `/login`: renova a sessão e manda para `/login` quem não está logado (e para `/painel` quem já está) |
+| `proxy.ts` + `lib/supabase/proxy.ts` | Roda antes de `/painel`, `/login` e `/cadastro`: renova a sessão e manda para `/login` quem não está logado (e para `/painel` quem já está) |
 | `lib/supabase/server.ts` | Cliente Supabase do servidor, com a sessão do usuário. O RLS do banco vale em toda consulta |
 | `lib/supabase/env.ts` | Lê e valida as variáveis do `.env.local` |
 | `lib/auth.ts` | `obterContextoPainel()`: usuário logado, barbearias a que ele tem acesso e a barbearia atual. Toda página do painel parte daqui |
 | `app/login/` | Tela e Server Action de login (e-mail e senha) |
+| `app/cadastro/` e `app/auth/confirmar/` | Criar conta (Supabase `signUp`) e o link do e-mail de confirmação, se ele estiver ligado |
+| `app/painel/nova-barbearia/` e `lib/cadastro/` | Assistente de cadastro da barbearia; validação com testes em `cadastro.test.ts` |
 | `app/painel/` | Layout com menu (troca de barbearia e sair) e a página inicial do painel |
 
 Não existe cliente Supabase no navegador por enquanto: login, logout e consultas rodam no servidor.

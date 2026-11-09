@@ -6,13 +6,13 @@ import { Revelar } from "@/components/animacao/revelar";
 import { Aviso } from "@/components/ui/aviso";
 import { Painel } from "@/components/ui/painel";
 import { LinkBotao } from "@/components/ui/botao";
-import { CalendarDays } from "lucide-react";
+import { ArrowRight, CalendarDays } from "lucide-react";
 import { CopiarLink } from "./_componentes/copiar-link";
 
-export default function PaginaPainel() {
+export default function PaginaPainel({ searchParams }: PageProps<"/painel">) {
   return (
     <Suspense fallback={<Carregando />}>
-      <ConteudoPainel />
+      <ConteudoPainel searchParams={searchParams} />
     </Suspense>
   );
 }
@@ -31,18 +31,31 @@ function Carregando() {
   );
 }
 
-async function ConteudoPainel() {
+async function ConteudoPainel({ searchParams }: { searchParams: PageProps<"/painel">["searchParams"] }) {
   const { atual } = await obterContextoPainel();
+  const recemCriada = (await searchParams).nova === "1";
 
   if (!atual) {
     return (
-      <div className="flex flex-col gap-6">
-        <h1 className="font-titulo text-titulo font-bold">Visão geral</h1>
-        <Aviso tipo="atencao" titulo="Seu usuário ainda não está ligado a nenhuma barbearia">
-          O login funcionou, mas falta liberar o acesso. Peça ao responsável pelo Vai de Corte para vincular o seu e-mail a
-          uma barbearia.
-        </Aviso>
-      </div>
+      <Revelar className="flex flex-col gap-6">
+        <h1 className="font-titulo text-titulo font-bold" data-anima>
+          Visão geral
+        </h1>
+        <Painel data-anima className="flex flex-col gap-5 p-5 sm:p-8">
+          <div>
+            <h2 className="font-titulo text-secao font-semibold">Falta cadastrar a sua barbearia</h2>
+            <p className="mt-2 max-w-[60ch] text-texto-sec">
+              Em uns 5 minutos você informa horários, serviços e barbeiros, e recebe o link para o cliente marcar sozinho.
+            </p>
+          </div>
+          <LinkBotao href="/painel/nova-barbearia" tamanho="lg" className="self-start" icone={<ArrowRight aria-hidden />}>
+            Cadastrar minha barbearia
+          </LinkBotao>
+        </Painel>
+        <p className="text-label text-texto-disc" data-anima>
+          É barbeiro de uma equipe? Peça ao dono da barbearia para liberar o seu e-mail.
+        </p>
+      </Revelar>
     );
   }
 
@@ -73,6 +86,15 @@ async function ConteudoPainel() {
         <p className="text-label text-texto-sec">{atual.papel === "dono" ? "Você é dono desta barbearia" : "Você é barbeiro desta barbearia"}</p>
         <h1 className="mt-1 font-titulo text-[1.625rem] font-bold leading-tight tracking-[-0.02em] sm:text-titulo">{atual.nome}</h1>
       </header>
+
+      {recemCriada && (
+        <div data-anima>
+          <Aviso tipo="sucesso" titulo="Sua barbearia está no ar">
+            O link abaixo já aceita agendamentos. Mande para um amigo testar, coloque na bio do Instagram e, quando puder,
+            envie logo e fotos em Barbearia.
+          </Aviso>
+        </div>
+      )}
 
       <Painel data-anima aria-labelledby="titulo-numeros">
         <h2 id="titulo-numeros" className="sr-only">
