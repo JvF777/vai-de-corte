@@ -90,7 +90,7 @@ function Conteudo({ agendamento: a, agora, aoFechar }: { agendamento: Agendament
             className="inline-flex min-h-11 items-center gap-2 text-ouro-hover underline-offset-4 hover:underline"
           >
             <MessageCircle className="size-4" aria-hidden />
-            <span className="numeros">{formatarWhatsapp(a.cliente.whatsapp)}</span>
+            <span className="numeros whitespace-nowrap">{formatarWhatsapp(a.cliente.whatsapp)}</span>
           </a>
         </dd>
         {a.observacoes && (

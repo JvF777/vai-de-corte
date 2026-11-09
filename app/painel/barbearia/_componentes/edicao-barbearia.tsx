@@ -82,7 +82,7 @@ function Dados({ barbearia: b }: { barbearia: BarbeariaPainel }) {
           <Campo rotulo="Instagram (opcional)" name="instagram" defaultValue={b.instagram ?? ""} placeholder="suabarbearia" erro={erro("instagram")} />
         </div>
         <Campo rotulo="Endereço" name="endereco" defaultValue={b.endereco ?? ""} maxLength={300} placeholder="Rua, número, bairro" erro={erro("endereco")} />
-        <div className="grid grid-cols-[1fr_6rem] gap-4">
+        <div className="grid grid-cols-[minmax(0,1fr)_5.5rem] gap-4">
           <Campo rotulo="Cidade" name="cidade" defaultValue={b.cidade ?? ""} maxLength={100} erro={erro("cidade")} />
           <Campo rotulo="UF" name="uf" defaultValue={b.uf ?? ""} maxLength={2} className="uppercase" erro={erro("uf")} />
         </div>

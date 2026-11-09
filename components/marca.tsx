@@ -16,7 +16,7 @@ export function Marca({ tamanho = "md" }: { tamanho?: "md" | "lg" }) {
   return (
     <span className="inline-flex items-center gap-2.5">
       <SimboloMarca className={tamanho === "lg" ? "size-9" : "size-7"} />
-      <span className={`font-titulo font-bold tracking-[-0.01em] text-texto ${tamanho === "lg" ? "text-[1.375rem]" : "text-[1.125rem]"}`}>
+      <span className={`whitespace-nowrap font-titulo font-bold tracking-[-0.01em] text-texto ${tamanho === "lg" ? "text-[1.375rem]" : "text-[1.125rem]"}`}>
         Vai de Corte
       </span>
     </span>

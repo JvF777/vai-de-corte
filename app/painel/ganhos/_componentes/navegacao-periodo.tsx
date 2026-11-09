@@ -31,7 +31,7 @@ export function NavegacaoPeriodo({ periodo, data, hoje, barbeiro }: Props) {
               key={p}
               href={urlGanhos(p, destino, barbeiro)}
               aria-current={ativo ? "page" : undefined}
-              className={`inline-flex min-h-10 items-center rounded-[6px] px-4 transition-colors ${
+              className={`inline-flex min-h-10 items-center rounded-[6px] px-3 transition-colors sm:px-4 ${
                 ativo ? "bg-elevado font-medium text-texto" : "text-texto-sec hover:text-texto"
               }`}
             >
@@ -41,21 +41,24 @@ export function NavegacaoPeriodo({ periodo, data, hoje, barbeiro }: Props) {
         })}
       </div>
 
-      <Link href={urlGanhos(periodo, mover(-1), barbeiro)} className={seta} aria-label={periodo === "mes" ? "Mês anterior" : "Dia anterior"}>
-        <ChevronLeft className="size-5" aria-hidden />
-      </Link>
-      <Link
-        href={urlGanhos(periodo, hoje, barbeiro)}
-        aria-current={atual ? "date" : undefined}
-        className={`inline-flex min-h-11 items-center rounded-sm border px-4 transition-colors ${
-          atual ? "border-borda-forte text-texto" : "border-borda text-texto-sec hover:border-borda-forte hover:text-texto"
-        }`}
-      >
-        {periodo === "mes" ? "Este mês" : "Hoje"}
-      </Link>
-      <Link href={urlGanhos(periodo, mover(1), barbeiro)} className={seta} aria-label={periodo === "mes" ? "Próximo mês" : "Próximo dia"}>
-        <ChevronRight className="size-5" aria-hidden />
-      </Link>
+      {/* Setas e "Hoje" quebram de linha juntos: no celular estreito nenhuma seta fica sozinha. */}
+      <div className="flex items-center gap-2">
+        <Link href={urlGanhos(periodo, mover(-1), barbeiro)} className={seta} aria-label={periodo === "mes" ? "Mês anterior" : "Dia anterior"}>
+          <ChevronLeft className="size-5" aria-hidden />
+        </Link>
+        <Link
+          href={urlGanhos(periodo, hoje, barbeiro)}
+          aria-current={atual ? "date" : undefined}
+          className={`inline-flex min-h-11 items-center rounded-sm border px-4 transition-colors ${
+            atual ? "border-borda-forte text-texto" : "border-borda text-texto-sec hover:border-borda-forte hover:text-texto"
+          }`}
+        >
+          {periodo === "mes" ? "Este mês" : "Hoje"}
+        </Link>
+        <Link href={urlGanhos(periodo, mover(1), barbeiro)} className={seta} aria-label={periodo === "mes" ? "Próximo mês" : "Próximo dia"}>
+          <ChevronRight className="size-5" aria-hidden />
+        </Link>
+      </div>
 
       <label className="sr-only" htmlFor="data-ganhos">
         {periodo === "mes" ? "Ir para o mês" : "Ir para a data"}
