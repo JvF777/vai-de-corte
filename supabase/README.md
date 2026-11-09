@@ -12,6 +12,7 @@ Etapa 1 do projeto: modelo de dados, migrations, RLS e seed.
 | `migrations/20261020000004_agendamento_publico.sql` | RPCs do link público: `horarios_ocupados`, `criar_agendamento_publico`, `consultar_agendamento_publico` |
 | `migrations/20261023000001_painel.sql` | Painel: RPC `criar_agendamento_manual` e o bucket público `barbearias` no Storage (logo e fotos), com escrita só do dono |
 | `migrations/20261105000001_avisos_push.sql` | Avisos no celular: tabela `inscricoes_push` e RPCs `salvar_inscricao_push`, `destinatarios_aviso_agendamento`, `descartar_inscricoes_push` |
+| `migrations/20261105000002_cadastro_barbearia.sql` | Cadastro pelo próprio dono: RPCs `slug_disponivel` e `criar_barbearia` |
 | `seed.sql` | Duas barbearias **fictícias** (`ficticia-navalha-de-ouro` e `ficticia-corte-fino`) com serviços, barbeiros, horários, clientes e agendamentos de exemplo |
 | `scripts/vincular_usuario.sql` | Liga um usuário do Auth a uma barbearia como dono ou barbeiro |
 | `tests/*.test.sql` | Testes pgTAP: isolamento entre barbearias, permissões por papel e regras de agendamento |
@@ -49,7 +50,7 @@ Decisões que valem para o app:
 | bloqueios | só via RPC (sem motivo) | os seus | todos, inclusive da barbearia inteira |
 | equipe (`barbearia_usuarios`) | não | vê o próprio vínculo | gerencia, mas não remove nem rebaixa a si mesmo |
 
-Criar ou apagar barbearia fica com a plataforma (seed/script com service_role).
+Criar barbearia: o usuário logado usa a RPC `criar_barbearia` (vira dono; até 3 por conta). Apagar barbearia fica com a plataforma (service_role).
 
 ## RPCs do link público
 
@@ -71,6 +72,13 @@ Erros vêm com `message` = código estável e `details` = texto em português:
 - `inscricoes_push`: um aparelho por linha, ligado ao usuário. Cada um só lê e apaga os seus (RLS). Gravar é só pela RPC `salvar_inscricao_push(...)`, que exige login e vínculo com alguma barbearia; se o mesmo navegador já era de outra pessoa, passa para quem está logado.
 - `destinatarios_aviso_agendamento(p_agendamento_id)`: chamada pelo servidor logo depois de um agendamento pelo link. Devolve os dados do aviso e os aparelhos do dono e do barbeiro do horário. Só responde uma vez por agendamento (marca `agendamentos.aviso_push_em`), só nos primeiros 10 minutos e nunca para agendamento manual. O endereço do aparelho sozinho não permite mandar aviso: o envio é assinado com a chave VAPID privada, que fica só no servidor.
 - `descartar_inscricoes_push(p_endpoints)`: apaga aparelhos que o serviço de push disse que não existem mais.
+
+## RPCs do cadastro
+
+Só para usuário logado:
+
+- `slug_disponivel(p_slug)`: o link está livre e no formato certo? (recusa reservados como `admin`, `painel` e `ficticia-*`).
+- `criar_barbearia(p_nome, p_slug, p_whatsapp, p_cidade, p_uf, p_endereco, p_horarios, p_servicos, p_barbeiros)`: cria a barbearia, o vínculo de dono, o funcionamento, os serviços e os barbeiros numa transação. Cada barbeiro faz todos os serviços no horário da barbearia; o marcado com `sou_eu` fica ligado ao login do dono. Erros: `NAO_AUTENTICADO`, `LIMITE_BARBEARIAS`, `DADOS_INVALIDOS`, `SLUG_INVALIDO`, `SLUG_EM_USO`.
 
 ## Storage
 

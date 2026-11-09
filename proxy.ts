@@ -6,6 +6,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Só o painel e o login precisam de sessão. O link público (/barbearia/...) fica de fora.
-  matcher: ["/painel/:path*", "/login"],
+  // Só o painel, o login e o cadastro precisam de sessão. O link público (/barbearia/...) fica de fora.
+  matcher: ["/painel/:path*", "/login", "/cadastro"],
 };

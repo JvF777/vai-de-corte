@@ -1,4 +1,4 @@
-import { LogIn } from "lucide-react";
+import { ArrowRight, Check, LogIn } from "lucide-react";
 import { Revelar } from "@/components/animacao/revelar";
 import { Marca } from "@/components/marca";
 import { LinkBotao, classesBotao } from "@/components/ui/botao";
@@ -21,14 +21,21 @@ const PASSOS = [
   },
 ];
 
+const VANTAGENS = ["Grátis, sem cartão", "Pronto em uns 5 minutos", "Você mesmo cadastra tudo"];
+
 export default function PaginaInicial() {
   return (
     <div className="flex flex-1 flex-col">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-5 sm:px-8">
         <Marca />
-        <LinkBotao href="/login" variante="secundario" icone={<LogIn aria-hidden />}>
-          Entrar
-        </LinkBotao>
+        <nav className="flex items-center gap-2" aria-label="Acesso">
+          <LinkBotao href="/login" variante="fantasma" icone={<LogIn aria-hidden />}>
+            Entrar
+          </LinkBotao>
+          <LinkBotao href="/cadastro" variante="secundario" className="hidden sm:inline-flex">
+            Cadastrar barbearia
+          </LinkBotao>
+        </nav>
       </header>
 
       <main className="flex-1">
@@ -44,8 +51,8 @@ export default function PaginaInicial() {
               mandar mensagem, e a agenda de cada barbeiro aparece organizada no seu painel.
             </p>
             <div className="mt-10 flex flex-col gap-3 sm:flex-row" data-hero-texto data-anima>
-              <LinkBotao href="/painel" tamanho="lg" icone={<LogIn aria-hidden />}>
-                Entrar no painel
+              <LinkBotao href="/cadastro" tamanho="lg" icone={<ArrowRight aria-hidden />}>
+                Cadastrar minha barbearia
               </LinkBotao>
               <a href="#como-funciona" className={classesBotao("contorno", "lg")}>
                 Ver como funciona
@@ -103,6 +110,31 @@ export default function PaginaInicial() {
               <p className="mt-3 text-texto-sec">
                 Confirmação e lembrete abrem o WhatsApp com a mensagem já escrita. Você envia do seu número, do seu jeito.
               </p>
+            </div>
+          </Revelar>
+        </section>
+        <section className="border-t border-borda bg-superficie">
+          <Revelar
+            aoRolar
+            className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-20 sm:px-8 lg:flex-row lg:items-end lg:justify-between lg:py-24"
+          >
+            <div>
+              <h2 className="font-titulo text-[1.75rem] font-bold leading-tight sm:text-[2.25rem]" data-anima>
+                Sua barbearia com link próprio hoje.
+              </h2>
+              <ul className="mt-6 flex flex-col gap-3 sm:flex-row sm:gap-8" data-anima>
+                {VANTAGENS.map((v) => (
+                  <li key={v} className="flex items-center gap-2 text-texto-sec">
+                    <Check className="size-4 shrink-0 text-ouro" aria-hidden />
+                    {v}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div data-anima>
+              <LinkBotao href="/cadastro" tamanho="lg" className="w-full sm:w-auto" icone={<ArrowRight aria-hidden />}>
+                Cadastrar minha barbearia
+              </LinkBotao>
             </div>
           </Revelar>
         </section>

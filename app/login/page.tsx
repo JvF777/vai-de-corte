@@ -26,8 +26,14 @@ export default function PaginaLogin() {
           <div className="mt-8" data-anima>
             <FormularioLogin />
           </div>
-          <p className="mt-8 text-label text-texto-disc" data-anima>
-            Ainda não tem acesso? Peça ao dono da barbearia para liberar o seu e-mail.
+          <p className="mt-8 text-label text-texto-sec" data-anima>
+            Dono de barbearia e ainda não tem conta?{" "}
+            <Link href="/cadastro" className="text-ouro-hover underline underline-offset-4 hover:text-ouro">
+              Cadastre a sua grátis
+            </Link>
+          </p>
+          <p className="mt-2 text-label text-texto-disc" data-anima>
+            Barbeiro de uma equipe? Peça ao dono para liberar o seu e-mail.
           </p>
         </Revelar>
       </main>
