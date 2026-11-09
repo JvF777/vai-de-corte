@@ -369,7 +369,7 @@ function PassoServicos({ campos }: { campos: Record<string, string> }) {
         <li>O nome e o preço aparecem para o cliente no link de agendamento.</li>
         <li>A duração é quanto tempo a agenda do barbeiro fica ocupada. Um corte de 30 min marcado às 10h libera o horário às 10h30.</li>
         <li>
-          Descrição de cada serviço e quais barbeiros fazem cada um você muda depois em{" "}
+          Quem faz cada serviço você escolhe no próximo passo. A descrição de cada um você coloca depois em{" "}
           <strong className="font-medium text-texto">Painel &gt; Serviços</strong>.
         </li>
       </Explicacao>
