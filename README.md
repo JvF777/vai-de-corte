@@ -156,6 +156,17 @@ Regras: use só classes com os tokens (`bg-card`, `text-texto-sec`, `border-bord
 
 As skills de design usadas no redesign estão em `.agents/skills` (instaladas com `npx skills add`).
 
+## Supabase sem pausar
+
+No plano grátis o Supabase pausa o projeto depois de 7 dias sem uso. O robô `.github/workflows/manter-supabase-ativo.yml` faz uma leitura pequena no banco a cada 3 dias para isso não acontecer.
+
+Para ligar, em **GitHub > Settings > Secrets and variables > Actions > New repository secret**, crie:
+
+- `SUPABASE_URL`: o mesmo valor de `NEXT_PUBLIC_SUPABASE_URL` do `.env.local`
+- `SUPABASE_PUBLISHABLE_KEY`: o mesmo valor de `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (é a chave pública, nunca a service_role)
+
+Para testar na hora: aba **Actions > Manter Supabase ativo > Run workflow**. Fica verde quando funciona.
+
 ## Comandos
 
 ```bash
