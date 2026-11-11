@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Manrope } from "next/font/google";
+import { urlDoSite } from "@/lib/site";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -17,6 +18,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(urlDoSite()),
   title: { default: "Vai de Corte", template: "%s | Vai de Corte" },
   description: "Agendamento online para barbearias: o cliente marca sozinho pelo link.",
 };
