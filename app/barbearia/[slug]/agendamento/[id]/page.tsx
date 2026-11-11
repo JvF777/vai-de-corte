@@ -29,8 +29,8 @@ export default function PaginaAgendamento({ params }: PageProps<"/barbearia/[slu
       </main>
       <footer className="border-t border-borda">
         <div className="mx-auto flex w-full max-w-xl items-center justify-between gap-4 px-4 py-6 text-label text-texto-disc sm:px-8">
-          <p>Agendamento online por</p>
-          <Link href="/" className="rounded-sm opacity-80 transition-opacity hover:opacity-100">
+          <p className="min-w-0">Agendamento online por</p>
+          <Link href="/" className="shrink-0 rounded-sm opacity-80 transition-opacity hover:opacity-100">
             <Marca />
           </Link>
         </div>

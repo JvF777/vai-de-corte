@@ -22,7 +22,7 @@ export function Campo({ rotulo, erro, dica, id, className = "", "aria-describedb
         id={idCampo}
         aria-invalid={erro ? true : undefined}
         aria-describedby={[idDica, idErro, descritoPor].filter(Boolean).join(" ") || undefined}
-        className={`min-h-11 rounded-sm border border-borda-campo bg-superficie px-3 text-base text-texto placeholder:text-texto-disc transition-colors hover:border-texto-disc focus-visible:border-ouro focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ouro/40 aria-invalid:border-erro ${className}`}
+        className={`min-h-11 w-full min-w-0 rounded-sm border border-borda-campo bg-superficie px-3 text-base text-texto placeholder:text-texto-disc transition-colors hover:border-texto-disc focus-visible:border-ouro focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ouro/40 aria-invalid:border-erro ${className}`}
         {...props}
       />
       {dica && (

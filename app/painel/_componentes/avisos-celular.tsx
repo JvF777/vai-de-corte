@@ -179,7 +179,7 @@ export function AvisosCelular() {
 
       {estado === "sem-chave" && (
         <p className="mt-1.5 text-label text-texto-sec">
-          Ainda não configurados: falta a chave <code className="text-texto">NEXT_PUBLIC_VAPID_PUBLIC_KEY</code> no servidor.
+          Ainda não configurados: falta a chave <code className="break-all text-texto">NEXT_PUBLIC_VAPID_PUBLIC_KEY</code> no servidor.
         </p>
       )}
 

@@ -507,14 +507,17 @@ function Lista({ data, barbeiros, ativos, bloqueios, vagos, aoAbrirAgendamento, 
                     <button
                       type="button"
                       onClick={() => aoAbrirAgendamento(a.id)}
-                      className={`grid w-full grid-cols-[3.5rem_1fr_auto] items-center gap-3 rounded-sm border border-l-[3px] border-borda bg-elevado px-2 py-2.5 text-left transition-colors hover:border-borda-forte ${BORDA_STATUS[a.status]}`}
+                      className={`grid w-full grid-cols-[3.5rem_minmax(0,1fr)] items-center gap-x-3 gap-y-1.5 rounded-sm border border-l-[3px] border-borda bg-elevado px-2 py-2.5 text-left transition-colors hover:border-borda-forte min-[400px]:grid-cols-[3.5rem_minmax(0,1fr)_auto] ${BORDA_STATUS[a.status]}`}
                     >
-                      <span className="numeros font-medium">{formatarHora(a.inicio)}</span>
+                      {/* Celular estreito: o selo desce para baixo do nome, para o nome do cliente caber. */}
+                      <span className="numeros row-span-2 self-start font-medium min-[400px]:row-span-1 min-[400px]:self-center">{formatarHora(a.inicio)}</span>
                       <span className="min-w-0">
-                        <span className="block truncate font-medium text-texto">{a.cliente.nome}</span>
-                        <span className="block truncate text-label text-texto-sec">{a.servico.nome}</span>
+                        <span className="block break-words font-medium text-texto">{a.cliente.nome}</span>
+                        <span className="block break-words text-label text-texto-sec">{a.servico.nome}</span>
                       </span>
-                      <SeloStatus valor={a.status} />
+                      <span className="col-start-2 min-[400px]:col-start-auto">
+                        <SeloStatus valor={a.status} />
+                      </span>
                     </button>
                   </li>
                 );

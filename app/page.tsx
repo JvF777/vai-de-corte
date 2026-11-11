@@ -32,7 +32,7 @@ export default function PaginaInicial() {
           <LinkBotao href="/login" variante="fantasma" icone={<LogIn aria-hidden />}>
             Entrar
           </LinkBotao>
-          <LinkBotao href="/cadastro" variante="secundario" className="hidden sm:inline-flex">
+          <LinkBotao href="/cadastro" variante="secundario" className="max-sm:hidden">
             Cadastrar barbearia
           </LinkBotao>
         </nav>

@@ -168,7 +168,7 @@ async function TelaGanhos({ searchParams }: Pick<PageProps<"/painel/ganhos">, "s
 
       {periodo === "mes" && <GraficoMes data={data} hoje={hoje} g={g} />}
 
-      <div className={`grid items-start gap-6 ${periodo === "dia" ? "lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]" : "lg:grid-cols-2"}`}>
+      <div className={`grid items-start gap-6 ${periodo === "dia" ? "xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]" : "lg:grid-cols-2"}`}>
         {periodo === "dia" && <Atendimentos itens={itens} nomes={mostrarBarbeiro ? nomes : null} />}
         <div className={periodo === "dia" ? "flex flex-col gap-6" : "contents"}>
           <Servicos g={g} periodo={periodo} />
@@ -369,17 +369,27 @@ function Atendimentos({ itens, nomes }: { itens: AgendamentoGanho[]; nomes: Map<
               <li key={a.id} className="grid grid-cols-[3.25rem_minmax(0,1fr)_auto] items-center gap-x-3 px-5 py-3 sm:px-6">
                 <span className="numeros text-texto-sec">{formatarHora(a.inicio)}</span>
                 <div className="min-w-0">
-                  <p className="truncate text-texto">{a.clienteNome}</p>
-                  <p className="truncate text-label text-texto-sec">
+                  <p className="break-words text-texto">{a.clienteNome}</p>
+                  <p className="break-words text-label text-texto-sec">
                     {a.servico.nome}
                     {nomes ? ` · ${nomes.get(a.barbeiroId) ?? ""}` : ""}
                   </p>
+                  {/* Celular estreito: o selo fica embaixo do nome, para o nome caber. */}
+                  {!entrou && (
+                    <div className="mt-1.5 min-[400px]:hidden">
+                      <SeloStatus valor={a.status} />
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   <span className={`numeros ${entrou ? "font-semibold text-texto" : perdido ? "text-texto-disc line-through" : "text-texto-sec"}`}>
                     {formatarPreco(a.precoCentavos)}
                   </span>
-                  {!entrou && <SeloStatus valor={a.status} />}
+                  {!entrou && (
+                    <span className="max-[399px]:hidden">
+                      <SeloStatus valor={a.status} />
+                    </span>
+                  )}
                 </div>
               </li>
             );
