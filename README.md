@@ -1,198 +1,134 @@
-# Vai de Corte
+<p align="center">
+  <img src="public/marca/logo.png" alt="Vai de Corte" width="220">
+</p>
 
-Agendamento online para barbearias: o cliente marca sozinho por um link e o barbeiro organiza a agenda num painel.
-Projeto do time "Programadores da Fiel" no Startup Challenge UMC 2026. Escopo e decisões em [CLAUDE.md](CLAUDE.md).
+<p align="center">
+  <strong>Agendamento online para barbearias.</strong><br>
+  O cliente marca sozinho por um link. O barbeiro corta.
+</p>
 
-Stack: Next.js 16 (App Router) + TypeScript + Tailwind CSS 4, Supabase (Postgres, Auth, RLS), Zod, Lucide e GSAP.
+<p align="center">
+  <a href="https://vai-de-corte.vercel.app"><strong>Ver o site no ar</strong></a> ·
+  <a href="https://vai-de-corte.vercel.app/barbearia/ficticia-navalha-de-ouro">Barbearia de exemplo</a> ·
+  <a href="docs/guia-tecnico.md">Guia técnico</a>
+</p>
+
+<p align="center">
+  <img alt="Next.js 16" src="https://img.shields.io/badge/Next.js-16-0B0B0D?logo=nextdotjs">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-0B0B0D?logo=typescript">
+  <img alt="Supabase" src="https://img.shields.io/badge/Supabase-Postgres%20%2B%20RLS-0B0B0D?logo=supabase">
+  <img alt="Tailwind CSS 4" src="https://img.shields.io/badge/Tailwind-4-0B0B0D?logo=tailwindcss">
+  <img alt="Vercel" src="https://img.shields.io/badge/Deploy-Vercel-0B0B0D?logo=vercel">
+</p>
+
+![Página inicial do Vai de Corte](docs/telas/pagina-inicial.png)
+
+## O problema
+
+Em barbearia pequena, quem marca horário é o próprio barbeiro, pelo WhatsApp, entre um corte e outro. Mensagem que fica sem resposta vira cliente perdido, e horário anotado de cabeça vira choque de agenda.
+
+O **Vai de Corte** dá para cada barbearia um link próprio (`/barbearia/nome-da-barbearia`). O cliente abre pelo Instagram, pelo QR Code no balcão ou por uma mensagem, escolhe serviço, barbeiro e horário livre, e pronto: sem baixar app e sem criar conta. O dono acompanha tudo num painel com a agenda de cada barbeiro e o faturamento do dia.
+
+Projeto do time **Programadores da Fiel** no **Startup Challenge UMC 2026** (trilha T1, SaaS para pequenas e médias empresas), pensado para as barbearias de Mogi das Cruzes e do Alto Tietê.
+
+## Como funciona
+
+### Para o cliente (sem login, feito para o celular)
+
+| Página da barbearia | Escolha do horário |
+| --- | --- |
+| ![Página pública de uma barbearia fictícia](docs/telas/pagina-barbearia.png) | <img src="docs/telas/horarios-celular.png" alt="Horários livres no celular" width="300"> |
+
+1. Abre a página da barbearia: serviços com preço e duração, barbeiros, endereço, horário e WhatsApp.
+2. Escolhe o serviço, o barbeiro (ou "qualquer um disponível"), o dia e um horário livre.
+3. Informa nome e WhatsApp, com o aviso de LGPD, e confirma.
+4. Na confirmação, salva o horário no Google Agenda (ou arquivo `.ics`) e fala com a barbearia pelo WhatsApp.
+
+![Animação da tesoura na confirmação do agendamento](docs/telas/confirmacao.gif)
+
+### Para a barbearia (painel com login)
+
+| Agenda do dia | Ganhos |
+| --- | --- |
+| ![Agenda com uma coluna por barbeiro](docs/telas/agenda.png) | ![Faturamento do dia, ticket médio e serviços mais feitos](docs/telas/ganhos.png) |
+
+- **Cadastro em 5 minutos:** o dono cria a conta e um assistente monta a barbearia em 4 passos (dados e link, horários, serviços, equipe).
+- **Agenda por barbeiro:** confirmar, concluir, cancelar, marcar falta, bloquear horário e criar agendamento manual (inclusive encaixe).
+- **Ganhos e métricas:** faturado no dia e no mês, ticket médio, faltas, cancelamentos, serviços mais feitos e resultado por barbeiro.
+- **Cadastros:** serviços, barbeiros (serviços que fazem, jornada, almoço, folgas e férias) e dados da barbearia (logo, fotos, regras do link).
+- **Lembrete pelo WhatsApp:** um toque abre a conversa com o cliente e a mensagem pronta (links `wa.me`, sem API paga).
+- **Aviso no celular:** cada agendamento novo pelo link chega como notificação (Web Push), com o painel instalável como app.
+- **Papéis:** o dono vê tudo; o barbeiro vê só a própria agenda.
+
+## Destaques técnicos
+
+- **Multi barbearia desde o primeiro dia.** Todas as tabelas têm `barbearia_id` e **Row Level Security** no Postgres. Uma barbearia nunca enxerga os dados de outra, e isso é testado no banco.
+- **Sem horário duplicado.** A disponibilidade é calculada em funções puras (`lib/availability`) e, na hora de confirmar, uma função do Postgres revalida tudo com lock por barbeiro. Se dois clientes tentam o mesmo horário ao mesmo tempo, só um consegue.
+- **Regras reais de agenda:** duração do serviço, funcionamento da barbearia, jornada e almoço do barbeiro, folgas, bloqueios, antecedência mínima e janela de dias, tudo no fuso `America/Sao_Paulo`.
+- **Segurança:** Server Components por padrão, chaves secretas só no servidor, validação com Zod, limite de agendamentos pelo link público, proteção contra iframe e cabeçalhos de segurança. Detalhes no [guia técnico](docs/guia-tecnico.md#segurança).
+- **Design próprio:** tema escuro com dourado champanhe, Manrope e Inter, tokens centralizados em `app/globals.css` e animações com GSAP que respeitam "reduzir movimento".
+- **Custo zero:** tudo roda nos planos gratuitos de Vercel e Supabase. Um GitHub Action mantém o banco ativo.
+
+## Stack
+
+| Camada | Tecnologia |
+| --- | --- |
+| Front-end | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, Lucide, GSAP |
+| Back-end | Server Components e Server Actions, Zod |
+| Banco e login | Supabase (Postgres, Auth, Row Level Security, Storage) |
+| Avisos | Web Push com VAPID (`web-push`) |
+| Testes | Vitest (regras de agenda, disponibilidade, cadastro e ganhos) e pgTAP (isolamento e RLS no banco) |
+| Deploy | Vercel, com deploy automático a cada push |
 
 ## Rodar no seu computador
 
-Precisa do [Node.js 20 ou mais novo](https://nodejs.org/) (o LTS serve).
+Precisa do [Node.js 20 ou mais novo](https://nodejs.org/) e de um projeto gratuito no [Supabase](https://supabase.com/).
 
 ```bash
+git clone https://github.com/JvF777/barbeiro-saas.git
+cd barbeiro-saas
 npm install
 cp .env.example .env.local     # no Windows (PowerShell): copy .env.example .env.local
 ```
 
-Abra o `.env.local` e preencha com os dados do projeto no Supabase:
-
-| Variável | Onde achar no painel do Supabase |
-| --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Project Settings > Data API > Project URL |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Project Settings > API Keys > Publishable key (`sb_publishable_...`). A chave `anon` antiga também funciona. |
-
-| `SUPABASE_SECRET_KEY` | Project Settings > API Keys > Secret keys (`sb_secret_...`). Só para os avisos no celular; sem ela o resto funciona. |
-
-Tudo que começa com `NEXT_PUBLIC_` vai para o navegador. A chave secreta (`SUPABASE_SECRET_KEY`, ou a `service_role` antiga) **nunca** pode ter esse prefixo, nem ir para o GitHub ou para print: ela ignora o RLS. Só `lib/supabase/admin.ts` usa essa chave, no servidor.
+Preencha o `.env.local` com a URL e a chave *publishable* do seu projeto Supabase. Depois aplique o banco e suba o site:
 
 ```bash
-npm run dev
+npx supabase@2 link --project-ref SEU_PROJECT_REF
+npx supabase@2 db push --linked            # migrations e RLS
+npm run dev                                # http://localhost:3000
 ```
 
-Abra http://localhost:3000.
-
-## Cadastro de barbearias (sem SQL)
-
-Qualquer dono de barbearia se cadastra sozinho:
-
-1. Na página inicial, **Cadastrar minha barbearia** leva para `/cadastro` (nome, e-mail e senha).
-2. Depois de criar a conta, o painel abre o assistente `/painel/nova-barbearia`, em 4 passos: dados e link (`/barbearia/<slug>`, com aviso se já estiver em uso), dias e horários, serviços com preço e duração, e quem atende ("Eu também corto cabelo aqui" liga o dono ao primeiro barbeiro).
-3. Ao terminar, a RPC `criar_barbearia` cria tudo numa transação só e o painel abre já na barbearia nova, com o link pronto para agendar. Logo, fotos, almoço e folgas ficam nas telas de sempre.
-
-Configuração necessária no Supabase (**Authentication > Sign In / Providers > Email**):
-
-- **Allow new users to sign up**: ligado (senão ninguém consegue criar conta).
-- **Confirm email**: desligado no MVP. O e-mail padrão do Supabase só entrega para os e-mails do seu time e tem limite de poucos por hora, então um dono de verdade não receberia o link. Se um dia ligar, configure um SMTP próprio e coloque `https://SEU-SITE/auth/confirmar` em **Authentication > URL Configuration > Redirect URLs** (a rota já trata o link).
-
-Limite: cada conta cadastra até 3 barbearias (para evitar abuso).
-
-### Barbearias fictícias do seed (teste)
-
-Para usar a `ficticia-navalha-de-ouro` do seed, crie o usuário em **Authentication > Users > Add user** (com **Auto Confirm User**) e rode no **SQL Editor**, trocando o e-mail:
-
-```sql
-insert into public.barbearia_usuarios (barbearia_id, usuario_id, papel)
-select b.id, u.id, 'dono'
-  from public.barbearias b, auth.users u
- where b.slug = 'ficticia-navalha-de-ouro'
-   and u.email = 'seu-email@exemplo.com'
-on conflict (barbearia_id, usuario_id) do update set papel = excluded.papel;
-```
-
-O mesmo SQL, com a versão para barbeiro, está em [`supabase/scripts/vincular_usuario.sql`](supabase/scripts/vincular_usuario.sql).
-
-## Como o login funciona
-
-| Arquivo | O que faz |
-| --- | --- |
-| `proxy.ts` + `lib/supabase/proxy.ts` | Roda antes de `/painel`, `/login` e `/cadastro`: renova a sessão e manda para `/login` quem não está logado (e para `/painel` quem já está) |
-| `lib/supabase/server.ts` | Cliente Supabase do servidor, com a sessão do usuário. O RLS do banco vale em toda consulta |
-| `lib/supabase/env.ts` | Lê e valida as variáveis do `.env.local` |
-| `lib/auth.ts` | `obterContextoPainel()`: usuário logado, barbearias a que ele tem acesso e a barbearia atual. Toda página do painel parte daqui |
-| `app/login/` | Tela e Server Action de login (e-mail e senha) |
-| `app/cadastro/` e `app/auth/confirmar/` | Criar conta (Supabase `signUp`) e o link do e-mail de confirmação, se ele estiver ligado |
-| `app/painel/nova-barbearia/` e `lib/cadastro/` | Assistente de cadastro da barbearia; validação com testes em `cadastro.test.ts` |
-| `app/painel/` | Layout com menu (troca de barbearia e sair) e a página inicial do painel |
-
-Não existe cliente Supabase no navegador por enquanto: login, logout e consultas rodam no servidor.
-
-## Link público de agendamento
-
-Cada barbearia tem o seu endereço: `/barbearia/<slug>` (no seed: http://localhost:3000/barbearia/ficticia-navalha-de-ouro). O cliente agenda sem login, em quatro etapas: serviço, barbeiro (ou qualquer um disponível), dia e horário, e nome + WhatsApp com o aceite da LGPD. Depois cai na tela de confirmação, com botões de WhatsApp, Google Agenda e arquivo `.ics`.
-
-| Arquivo | O que faz |
-| --- | --- |
-| `lib/availability/` | **Única** lógica de disponibilidade do app: grade a partir da meia-noite, duração do serviço, funcionamento, jornada e almoço do barbeiro, folgas, bloqueios, antecedência mínima e janela. Funções puras, com testes em `availability.test.ts` |
-| `lib/vitrine.ts` | Lê o catálogo público (barbearia, serviços, barbeiros, horários) e chama as RPCs `horarios_ocupados` e `consultar_agendamento_publico` |
-| `lib/supabase/publico.ts` | Cliente Supabase do link público: sempre como visitante, sem sessão nem cookies |
-| `app/barbearia/[slug]/` | Página da barbearia, fluxo de agendamento e Server Actions (`buscarHorarios` e `agendar`) |
-| `app/barbearia/[slug]/agendamento/[id]/` | Tela de confirmação e o arquivo `agenda.ics` |
-| `lib/agenda-links.ts`, `lib/formatos.ts` | Link do Google Agenda, arquivo `.ics`, preço, duração, datas e links `wa.me` |
-
-Os horários aparecem calculados no servidor na hora em que o cliente escolhe o dia. Ao confirmar, a RPC `criar_agendamento_publico` confere tudo de novo no Postgres, com lock por barbeiro; se alguém pegou o horário um instante antes, a tela volta para a escolha de horário já atualizada.
-
-## Painel da barbearia
-
-| Tela | O que faz |
-| --- | --- |
-| `/painel/agenda` | Agenda do dia: no computador, uma coluna por barbeiro com horas, almoço, bloqueios e a linha de agora; no celular, uma lista por barbeiro. Tocar num cliente abre os detalhes para confirmar, concluir, cancelar ou marcar falta (concluir e falta só depois que o horário começa). Também tem "Bloquear horário" e "Novo agendamento" (com encaixe fora da grade). O dono vê todos; o barbeiro, só a própria agenda |
-| `/painel/servicos` | Tabela de serviços com preço, duração e quem faz; criar, editar, tirar do link ou excluir (se ainda não tiver agendamento) |
-| `/painel/barbeiros` e `/painel/barbeiros/[id]` | Equipe; por barbeiro: foto, apresentação, dias e horários com almoço, serviços que faz, folgas e férias |
-| `/painel/barbearia` | Nome, endereço, WhatsApp, Instagram, Maps, logo, até 12 fotos, horário de funcionamento e regras do link (intervalo, antecedência, quantos dias à frente) |
-
-| Arquivo | O que faz |
-| --- | --- |
-| `lib/painel/dados.ts` | Leituras do painel com a sessão do usuário (cadastro completo, agenda do dia, folgas) e `obterAcesso()` (papel e barbeiro ligado ao login) |
-| `lib/painel/agenda.ts` | Regras puras da agenda: ações permitidas por status, faixa de horas da grade, resumo do dia. Testes em `agenda.test.ts` |
-| `lib/painel/imagens.ts` | Envio e remoção de imagens no Storage (bucket `barbearias`) |
-| `app/painel/*/actions.ts` | Server Actions: validam com Zod, conferem o papel e gravam com a sessão do usuário (o RLS vale sempre) |
-| `components/ui/modal.tsx` | Modal com `<dialog>` nativo: folha de baixo no celular, centro no desktop |
-
-Só o dono vê Serviços, Barbeiros e Barbearia no menu. O agendamento manual usa a RPC `criar_agendamento_manual`, que trava o barbeiro e recusa bloqueios e choque de horário.
-
-## Avisos no celular (Web Push)
-
-Quando um cliente agenda pelo link, o dono da barbearia e o barbeiro do horário recebem uma notificação no celular, igual à de um app: "Novo agendamento: João Silva / Corte com Carlos, amanhã às 15:00". Tocar nela abre a agenda daquele dia. Agendamento manual (feito no painel) não avisa.
-
-**Configurar uma vez (João):**
-
-1. No terminal, dentro da pasta do projeto, rode `npx web-push generate-vapid-keys`. Ele mostra duas chaves: *Public Key* e *Private Key*.
-2. Coloque no `.env.local` (e na Vercel, em Settings > Environment Variables):
-   - `NEXT_PUBLIC_VAPID_PUBLIC_KEY` = a Public Key
-   - `VAPID_PRIVATE_KEY` = a Private Key (essa é secreta: nunca com `NEXT_PUBLIC_`)
-   - `VAPID_SUBJECT` = `mailto:` + seu e-mail
-   - `SUPABASE_SECRET_KEY` = a chave secreta do Supabase (Project Settings > API Keys > Secret keys). Só o servidor consegue ler quais aparelhos recebem o aviso.
-3. Aplique a migration nova: `npx supabase db push --linked`.
-4. Reinicie o `npm run dev` (ou faça um novo deploy na Vercel).
-
-Gere as chaves uma vez só e use as mesmas no computador e na Vercel. Se trocar depois, todo mundo precisa ligar os avisos de novo.
-
-**Cada barbeiro, no celular:**
-
-- **Android (Chrome):** abrir o painel, menu, "Ligar avisos" e tocar em Permitir. Dá para instalar na tela inicial pelo menu do Chrome ("Instalar app"), mas não é obrigatório.
-- **iPhone (iOS 16.4 ou mais novo):** abrir o painel no Safari, tocar em Compartilhar > "Adicionar à Tela de Início", abrir o Vai de Corte pelo ícone novo e só então "Ligar avisos". No Safari comum o iPhone não deixa.
-- O botão "Testar" manda um aviso na hora para conferir.
-
-Precisa de HTTPS (a Vercel já tem; no computador, `localhost` também funciona).
-
-| Arquivo | O que faz |
-| --- | --- |
-| `public/sw.js` | Service worker: mostra a notificação e abre a agenda ao tocar. Não guarda páginas em cache |
-| `public/manifest.webmanifest` e `public/icones/` | Deixam o painel instalável como app (nome, ícone, cor) |
-| `app/painel/_componentes/avisos-celular.tsx` | Caixa "Avisos no celular" no menu do painel: ligar, testar e desligar neste aparelho |
-| `lib/push/` | Texto do aviso (`mensagem.ts`, com testes), envio assinado com VAPID (`envio.ts`) e o aviso de agendamento novo (`novo-agendamento.ts`) |
-| `supabase/migrations/20261105000001_avisos_push.sql` | Tabela `inscricoes_push` (um aparelho por linha, cada um só vê os seus) e as RPCs de salvar, buscar destinatários e limpar aparelhos expirados |
-
-## Segurança
-
-Resumo do que protege o sistema (auditoria de 2026-11-09):
-
-- **RLS em todas as tabelas.** Cada barbearia só enxerga os próprios dados (`barbearia_id` + funções `privado.eh_membro`/`eh_dono`). O visitante do link lê só o catálogo e usa RPCs que validam tudo no banco. Testes em `supabase/tests` (rodar com `npx supabase@2 test db`).
-- **Sem SQL injection.** O app só fala com o banco pelo `supabase-js` (parâmetros, nunca texto colado em SQL) e as funções do banco não montam SQL dinâmico. Todas as funções `security definer` têm `search_path` vazio.
-- **Chaves.** No navegador só vão a URL, a chave publishable e a chave pública VAPID. `SUPABASE_SECRET_KEY` e `VAPID_PRIVATE_KEY` ficam só no servidor (`server-only`). `.env.local` está no `.gitignore`.
-- **Link público.** No máximo 3 agendamentos futuros por WhatsApp e 15 agendamentos novos pelo link a cada 10 minutos por barbearia.
-- **Cabeçalhos.** O site não abre dentro de iframe de outro site (`frame-ancestors 'none'`) e manda `nosniff`, `Referrer-Policy` e HSTS.
-
-Ajustes que ficam no painel do Supabase (não dá para fazer pelo código):
-
-- **Authentication > Sign In / Providers > Email**: senha mínima de **8** caracteres.
-- **Authentication > Rate Limits**: deixe os limites padrão (não aumente).
-- **Advisors > Security Advisor**: rode de vez em quando e resolva o que aparecer em vermelho.
-
-## Design system
-
-Tema escuro com dourado champanhe, Manrope nos títulos e Inter na interface.
-
-| Onde | O que tem |
-| --- | --- |
-| `app/globals.css` (bloco `@theme`) | **Todos os tokens**: cores, fontes, tamanhos de texto, raios e sombra. As cores padrão do Tailwind estão desligadas, então só existem as do Vai de Corte (e nenhum verde). |
-| `app/layout.tsx` | Carrega Manrope (600, 700) e Inter (400, 500, 600) pelo `next/font` |
-| `components/ui/` | `Botao` (primário, secundário, contorno, destrutivo, fantasma, com carregamento), `BotaoEnviar`, `Campo`, `Aviso` (sucesso, erro, atenção, info), `SeloStatus` (status do agendamento) e `Painel` |
-| `components/animacao/` | GSAP: `Revelar` (entrada em sequência), `Contador` (números que contam até o valor real) e o registro dos plugins |
-| `components/marca.tsx` | Logo e nome |
-
-Regras: use só classes com os tokens (`bg-card`, `text-texto-sec`, `border-borda`...), nunca cores soltas. Texto discreto (`text-texto-disc`) não vai sobre `bg-elevado` e o dourado discreto não é usado como texto (os dois ficam abaixo de 4,5:1 nesses fundos). Toda animação usa só transform e opacidade e respeita "reduzir movimento" do sistema.
-
-As skills de design usadas no redesign estão em `.agents/skills` (instaladas com `npx skills add`).
-
-## Supabase sem pausar
-
-No plano grátis o Supabase pausa o projeto depois de 7 dias sem uso. O robô `.github/workflows/manter-supabase-ativo.yml` faz uma leitura pequena no banco a cada 3 dias para isso não acontecer.
-
-Para ligar, em **GitHub > Settings > Secrets and variables > Actions > New repository secret**, crie:
-
-- `SUPABASE_URL`: o mesmo valor de `NEXT_PUBLIC_SUPABASE_URL` do `.env.local`
-- `SUPABASE_PUBLISHABLE_KEY`: o mesmo valor de `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (é a chave pública, nunca a service_role)
-
-Para testar na hora: aba **Actions > Manter Supabase ativo > Run workflow**. Fica verde quando funciona.
-
-## Comandos
+O `supabase/seed.sql` cria duas barbearias **fictícias** para testar. O passo a passo completo (variáveis, seed, avisos no celular, configuração do Auth) está no [guia técnico](docs/guia-tecnico.md).
 
 ```bash
-npm run dev     # servidor de desenvolvimento
-npm run build   # build de produção (precisa do .env.local preenchido)
-npm run lint    # ESLint
-npm test        # testes da disponibilidade e da agenda (Vitest)
+npm test                     # testes de agenda e disponibilidade (Vitest)
+npx supabase@2 test db       # testes de isolamento entre barbearias (pgTAP)
 ```
 
-Banco, migrations, RLS e testes do banco: veja [supabase/README.md](supabase/README.md).
+## Estrutura
+
+```
+app/
+  barbearia/[slug]/   página pública e fluxo de agendamento
+  painel/             agenda, ganhos, serviços, barbeiros e barbearia
+  cadastro/, login/   criação de conta e acesso
+components/           interface, animações e página inicial
+lib/
+  availability/       cálculo de horários livres (com testes)
+  painel/, push/      regras do painel e avisos no celular
+supabase/
+  migrations/         tabelas, RLS e funções do Postgres
+  tests/              testes do banco
+```
+
+## Time
+
+**Programadores da Fiel**, Startup Challenge UMC 2026:
+
+- **João Vitor Ferreira** ([@JvF777](https://github.com/JvF777)): desenvolvimento
+- **Leonardo** e **Samuel**: clientes, testes, provas de uso e vídeo
+
+---
+
+<sub>As barbearias, os clientes e os números que aparecem nas imagens são fictícios.</sub>

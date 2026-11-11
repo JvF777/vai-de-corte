@@ -14,3 +14,8 @@ npm-debug.log*
 
 # Saída das ferramentas de design (prints e relatórios)
 .taste-skill/
+
+# Skills de design do agente (ferramentas locais de terceiros, não fazem parte do produto)
+.agents/
+.claude/
+skills-lock.json
