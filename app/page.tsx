@@ -1,156 +1,292 @@
-import { ArrowRight, Check, LogIn } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight, LogIn } from "lucide-react";
 import { Revelar } from "@/components/animacao/revelar";
-import { LogoCompleta, Marca } from "@/components/marca";
+import { Marca } from "@/components/marca";
 import { LinkBotao, classesBotao } from "@/components/ui/botao";
+import { BarraEtapas, type Etapa } from "@/components/vitrine/barra-etapas";
 import { GradeHorarios } from "@/components/vitrine/grade-horarios";
-import { HeroAnimado } from "@/components/vitrine/hero-animado";
+import { HeroRolo, type Quadro } from "@/components/vitrine/hero-rolo";
+import { VideoLoop } from "@/components/vitrine/video-loop";
+import { ZoomBarbearia } from "@/components/vitrine/zoom-barbearia";
+import fotoCadeiras from "@/public/vitrine/cadeiras.jpg";
+import fotoFerramentas from "@/public/vitrine/ferramentas.jpg";
+import posterMaquina from "@/public/vitrine/maquina-poster.jpg";
+import posterNavalha from "@/public/vitrine/navalha-poster.jpg";
 
-const PASSOS = [
+// Rolo do topo: vídeos e fotos de barbearia que passam por dentro da frase.
+const QUADROS: Quadro[] = [
   {
-    titulo: "Coloque o link onde o cliente já está",
-    texto: "Na bio do Instagram, num QR Code no balcão ou na resposta do WhatsApp. Cada barbearia tem o seu endereço.",
+    tipo: "video",
+    src: "/vitrine/maquina.mp4",
+    poster: "/vitrine/maquina-poster.jpg",
+    srcCelular: "/vitrine/tesouras-vertical.mp4",
+    posterCelular: "/vitrine/tesouras-vertical-poster.jpg",
+    legenda: "Máquina na nuca, no horário que o cliente escolheu.",
   },
   {
-    titulo: "O cliente escolhe um horário livre",
-    texto:
-      "Serviço, barbeiro (ou qualquer um disponível) e o horário. Só aparece o que cabe de verdade: duração do serviço, almoço, folgas e bloqueios.",
+    tipo: "video",
+    src: "/vitrine/navalha.mp4",
+    poster: "/vitrine/navalha-poster.jpg",
+    legenda: "Navalha pronta para a barba das três.",
   },
   {
-    titulo: "Você acompanha tudo no painel",
-    texto: "A agenda de cada barbeiro em um lugar, com confirmação, faltas e um lembrete pronto para mandar no WhatsApp.",
+    tipo: "foto",
+    foto: fotoFerramentas,
+    alt: "Pincel, navalhas e pentes de máquina sobre a bancada",
+    legenda: "Pincel, navalha e pentes esperando o próximo.",
+  },
+  {
+    tipo: "foto",
+    foto: fotoCadeiras,
+    alt: "Cadeiras de barbeiro antigas em fila num salão de piso xadrez",
+    legenda: "Cadeira livre só fica livre se ninguém souber.",
   },
 ];
 
-const VANTAGENS = ["Grátis, sem cartão", "Pronto em uns 5 minutos", "Você mesmo cadastra tudo"];
+const ETAPAS: Etapa[] = [
+  { duracao: "Uns 5 minutos", texto: "Primeiro, você cadastra a barbearia, os serviços e os barbeiros.", peso: 2, cor: "elevado" },
+  { duracao: "Menos de 1 minuto", texto: "Depois, o cliente abre o seu link e escolhe um horário livre.", peso: 2, cor: "ouro-discreto" },
+  {
+    duracao: "O dia inteiro",
+    texto: "E a agenda de cada barbeiro vai se enchendo no painel, sem você parar o corte para responder.",
+    peso: 5,
+    cor: "ouro",
+  },
+];
+
+/** Recorte de foto do tamanho de uma palavra, dentro do parágrafo de recursos. */
+function FotoPalavra({ src, alt, posicao = "50% 50%" }: { src: typeof fotoCadeiras; alt: string; posicao?: string }) {
+  return (
+    <span className="relative mx-[0.12em] inline-block h-[1em] w-[1.5em] translate-y-[0.12em] overflow-hidden rounded-[0.18em] align-baseline sm:w-[1.9em]">
+      <Image src={src} alt={alt} fill sizes="120px" className="object-cover" style={{ objectPosition: posicao }} />
+    </span>
+  );
+}
 
 export default function PaginaInicial() {
   return (
     <div className="flex flex-1 flex-col">
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-5 sm:px-8">
-        <Marca />
-        <nav className="flex items-center gap-2" aria-label="Acesso">
-          <LinkBotao href="/login" variante="fantasma" icone={<LogIn aria-hidden />}>
-            Entrar
-          </LinkBotao>
-          <LinkBotao href="/cadastro" variante="secundario" className="max-sm:hidden">
-            Cadastrar barbearia
-          </LinkBotao>
-        </nav>
-      </header>
-
-      <main className="flex-1">
-        <HeroAnimado className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pb-20 pt-10 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(340px,400px)] lg:gap-16 lg:pb-32 lg:pt-20">
-          <div>
-            <h1 className="font-titulo text-display font-bold" data-anima>
-              Seu cliente marca.
-              <br />
-              Você corta.
-            </h1>
-            <p className="mt-8 max-w-[52ch] text-[1.0625rem] leading-relaxed text-texto-sec sm:text-lg" data-hero-texto data-anima>
+      <HeroRolo
+        quadros={QUADROS}
+        cabecalho={
+          <header className="flex items-center justify-between gap-4 py-5">
+            <Link href="/" aria-label="Vai de Corte, página inicial" className="inline-flex">
+              <Marca />
+            </Link>
+            <nav className="flex items-center gap-1 sm:gap-2" aria-label="Principal">
+              <a href="#como-funciona" className={classesBotao("fantasma", "md", "max-lg:hidden")}>
+                Como funciona
+              </a>
+              <a href="#recursos" className={classesBotao("fantasma", "md", "max-lg:hidden")}>
+                Recursos
+              </a>
+              <LinkBotao href="/login" variante="fantasma" icone={<LogIn aria-hidden />}>
+                Entrar
+              </LinkBotao>
+              <LinkBotao href="/cadastro" className="max-sm:hidden">
+                Cadastrar barbearia
+              </LinkBotao>
+            </nav>
+          </header>
+        }
+        antes={
+          <>
+            Seu cliente <span className="lg:block">marca.</span>
+          </>
+        }
+        depois={
+          <>
+            Você <span className="lg:block">corta.</span>
+          </>
+        }
+        apoio={
+          <>
+            <p className="max-w-[46ch] text-[1.0625rem] leading-relaxed text-texto sm:text-lg">
               Vai de Corte é o link de agendamento da sua barbearia. O cliente escolhe serviço, barbeiro e horário sem
-              mandar mensagem, e a agenda de cada barbeiro aparece organizada no seu painel.
+              mandar mensagem. Grátis.
             </p>
-            <div className="mt-10 flex flex-col gap-3 sm:flex-row" data-hero-texto data-anima>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <LinkBotao href="/cadastro" tamanho="lg" icone={<ArrowRight aria-hidden />}>
                 Cadastrar minha barbearia
               </LinkBotao>
-              <a href="#como-funciona" className={classesBotao("contorno", "lg")}>
-                Ver como funciona
+              <a href="#teste" className={classesBotao("contorno", "lg", "max-sm:hidden")}>
+                Testar como cliente
               </a>
             </div>
-          </div>
+          </>
+        }
+      />
 
-          <div className="lg:justify-self-end lg:w-full lg:max-w-md" data-hero-grade data-anima>
-            <GradeHorarios />
-          </div>
-        </HeroAnimado>
-
-        <section id="como-funciona" className="border-t border-borda bg-superficie">
-          <Revelar
-            aoRolar
-            className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-20 sm:px-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16 lg:py-28"
-          >
-            <div data-anima>
-              <h2 className="font-titulo text-[1.75rem] font-bold leading-tight sm:text-[2.25rem]">Como funciona</h2>
-              <p className="mt-4 max-w-[40ch] text-texto-sec">
-                Três passos entre o cliente ver o seu link e o horário aparecer na agenda do barbeiro.
-              </p>
+      <main className="flex-1">
+        <section id="como-funciona" aria-labelledby="titulo-como" className="scroll-mt-4 bg-superficie">
+          <div className="mx-auto w-full max-w-[1600px] px-4 py-24 sm:px-8 lg:py-40">
+            <Revelar aoRolar>
+              <h2
+                id="titulo-como"
+                data-anima
+                className="font-titulo text-[clamp(2.5rem,7vw,6.5rem)] font-bold leading-[0.95] tracking-[-0.04em]"
+              >
+                Do link à cadeira.
+              </h2>
+            </Revelar>
+            <div className="mt-12 lg:mt-16">
+              <BarraEtapas etapas={ETAPAS} />
             </div>
-            <ol className="flex flex-col">
-              {PASSOS.map((passo, i) => (
-                <li
-                  key={passo.titulo}
-                  data-anima
-                  className="grid grid-cols-[2.5rem_1fr] gap-4 border-t border-borda py-7 first:border-t-0 first:pt-0 sm:grid-cols-[3.5rem_1fr]"
-                >
-                  <span className="numeros font-titulo text-[1.75rem] font-bold leading-none text-ouro sm:text-[2.25rem]" aria-hidden>
-                    {i + 1}
-                  </span>
-                  <div>
-                    <h3 className="font-titulo text-subtitulo font-semibold sm:text-[1.25rem]">{passo.titulo}</h3>
-                    <p className="mt-2 max-w-[56ch] text-texto-sec">{passo.texto}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </Revelar>
+          </div>
         </section>
 
-        <section className="mx-auto w-full max-w-6xl px-4 py-20 sm:px-8 lg:py-28">
-          <Revelar aoRolar className="grid gap-6 md:grid-cols-2">
-            <div data-anima className="rounded-lg border border-borda bg-card p-6 sm:p-8">
-              <h2 className="font-titulo text-secao font-semibold">Agenda separada por barbeiro</h2>
-              <p className="mt-3 text-texto-sec">
-                O mesmo horário pode estar livre com um barbeiro e ocupado com outro. Ninguém marca duas vezes no mesmo
-                horário: o sistema confere antes de confirmar.
-              </p>
-            </div>
-            <div data-anima className="rounded-lg border border-borda bg-card p-6 sm:p-8">
-              <h2 className="font-titulo text-secao font-semibold">WhatsApp sem robô</h2>
-              <p className="mt-3 text-texto-sec">
-                Confirmação e lembrete abrem o WhatsApp com a mensagem já escrita. Você envia do seu número, do seu jeito.
-              </p>
-            </div>
-          </Revelar>
-        </section>
-        <section className="border-t border-borda bg-superficie">
+        <ZoomBarbearia
+          foto={fotoCadeiras}
+          alt="Salão de barbearia com cadeiras antigas em fila e piso xadrez"
+          antes="Sua barbearia"
+          depois="aberta 24 horas."
+          legenda="O link aceita horário de madrugada, no domingo e no meio de um corte. Você só abre a agenda e vê quem vem."
+        />
+
+        <section id="teste" aria-labelledby="titulo-teste" className="scroll-mt-4 bg-superficie">
           <Revelar
             aoRolar
-            className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-20 sm:px-8 lg:flex-row lg:items-end lg:justify-between lg:py-24"
+            className="mx-auto grid w-full max-w-[1600px] items-center gap-12 px-4 py-24 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] lg:gap-20 lg:py-40"
           >
             <div>
-              <h2 className="font-titulo text-[1.75rem] font-bold leading-tight sm:text-[2.25rem]" data-anima>
-                Sua barbearia com link próprio hoje.
+              <h2
+                id="titulo-teste"
+                data-anima
+                className="font-titulo text-[clamp(2.25rem,5.2vw,4.75rem)] font-bold leading-[0.98] tracking-[-0.04em]"
+              >
+                Marque um horário aqui.
               </h2>
-              <ul className="mt-6 flex flex-col gap-3 sm:flex-row sm:gap-8" data-anima>
-                {VANTAGENS.map((v) => (
-                  <li key={v} className="flex items-center gap-2 text-texto-sec">
-                    <Check className="size-4 shrink-0 text-ouro" aria-hidden />
-                    {v}
-                  </li>
-                ))}
-              </ul>
+              <p data-anima className="mt-6 max-w-[48ch] text-[1.0625rem] leading-relaxed text-texto">
+                É a tela que o cliente vê no seu link. Só aparece horário que cabe de verdade: duração do serviço, almoço,
+                folgas e bloqueios já ficam de fora.
+              </p>
+              <div data-anima className="mt-10 max-w-md">
+                <GradeHorarios />
+              </div>
             </div>
-            <div data-anima>
-              <LinkBotao href="/cadastro" tamanho="lg" className="w-full sm:w-auto" icone={<ArrowRight aria-hidden />}>
+            <div data-anima className="relative aspect-[9/14] w-full overflow-hidden rounded-sm bg-card max-lg:hidden">
+              <VideoLoop src="/vitrine/tesouras-vertical.mp4" poster="/vitrine/tesouras-vertical-poster.jpg" />
+            </div>
+          </Revelar>
+        </section>
+
+        <section id="recursos" aria-labelledby="titulo-recursos" className="scroll-mt-4">
+          <h2 id="titulo-recursos" className="sr-only">
+            O que vem no painel
+          </h2>
+          <Revelar aoRolar className="mx-auto w-full max-w-[1600px] px-4 py-24 sm:px-8 lg:py-40">
+            <p
+              data-anima
+              className="max-w-[60rem] font-titulo text-[clamp(1.5rem,5.6vw,2rem)] font-semibold leading-[1.25] tracking-[-0.02em] lg:max-w-[64rem]"
+            >
+              Cada barbeiro tem a sua agenda
+              <FotoPalavra src={posterMaquina} alt="Barbeiro passando a máquina" posicao="40% 30%" />, ninguém marca
+              duas vezes no mesmo horário
+              <span
+                className="mx-[0.12em] inline-flex h-[1em] translate-y-[0.12em] items-center rounded-[0.18em] bg-superficie px-[0.3em] align-baseline text-[0.5em] font-medium tracking-normal text-texto-disc line-through"
+                data-ui
+              >
+                10:30 ocupado
+              </span>
+              , o lembrete sai pelo seu WhatsApp
+              <FotoPalavra src={posterNavalha} alt="Mãos abrindo uma navalha dourada" posicao="50% 45%" />e o painel
+              mostra quanto cada um faturou
+              <FotoPalavra src={fotoFerramentas} alt="Ferramentas de barbeiro na bancada" posicao="30% 40%" />.
+            </p>
+            <div data-anima className="mt-16 grid lg:mt-20 lg:grid-cols-2">
+              <div className="lg:col-start-2">
+                <p className="max-w-[44ch] text-lg leading-relaxed text-texto">
+                  Tem ainda aviso no celular quando entra horário novo, Google Agenda para o cliente e a sua página com
+                  fotos, serviços e preços.
+                </p>
+                <LinkBotao href="/cadastro" tamanho="lg" className="mt-8" icone={<ArrowRight aria-hidden />}>
+                  Criar o link da barbearia
+                </LinkBotao>
+              </div>
+            </div>
+          </Revelar>
+        </section>
+
+        <section aria-labelledby="titulo-chamada" className="bg-ouro text-sobre-ouro">
+          <Revelar
+            aoRolar
+            className="mx-auto flex min-h-[80svh] w-full max-w-[1600px] flex-col justify-between gap-16 px-4 py-20 sm:px-8 lg:min-h-[90svh] lg:py-24"
+          >
+            <h2
+              id="titulo-chamada"
+              data-anima
+              className="font-titulo text-[clamp(2rem,8vw,7.5rem)] font-bold leading-[0.92] tracking-[-0.045em]"
+            >
+              Menos mensagem.
+              <br />
+              Mais cadeira cheia.
+            </h2>
+            <div data-anima className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+              <p className="max-w-[40ch] text-lg leading-relaxed sm:text-xl">
+                Grátis e sem cartão. Você mesmo cadastra tudo em uns 5 minutos e já sai com o link.
+              </p>
+              <Link
+                href="/cadastro"
+                className="inline-flex min-h-14 items-center justify-center gap-2 rounded-sm bg-fundo px-7 text-[1.0625rem] font-semibold text-ouro transition-[background-color,transform] duration-150 hover:bg-superficie active:scale-[0.98] [&_svg]:size-5 [&_svg]:transition-transform hover:[&_svg]:translate-x-1"
+              >
                 Cadastrar minha barbearia
-              </LinkBotao>
+                <ArrowRight aria-hidden />
+              </Link>
             </div>
           </Revelar>
         </section>
       </main>
 
-      <footer className="border-t border-borda">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-10 sm:flex-row sm:items-end sm:justify-between sm:px-8">
-          <div>
-            <LogoCompleta className="h-28 w-auto" />
-            <p className="mt-3 max-w-[48ch] text-label text-texto-disc">
-              Feito pelo time Programadores da Fiel para o Startup Challenge UMC 2026.
-            </p>
+      <footer className="relative overflow-hidden">
+        <Revelar aoRolar className="mx-auto w-full max-w-[1600px] px-4 pt-24 sm:px-8 lg:pt-32">
+          <div className="grid gap-10 lg:grid-cols-12">
+            <div className="lg:col-span-7" data-anima>
+              <h2 className="font-titulo text-[clamp(2rem,5vw,4.5rem)] font-bold leading-[0.98] tracking-[-0.04em]">
+                Já tem conta?
+                <br />
+                Abra a sua agenda.
+              </h2>
+              <LinkBotao href="/login" variante="contorno" tamanho="lg" className="mt-8">
+                Área do barbeiro
+              </LinkBotao>
+            </div>
+            <ul className="flex flex-col gap-3 text-base lg:col-span-3 lg:col-start-10" data-anima>
+              <li>
+                <Link href="/cadastro" className="text-texto-sec transition-colors hover:text-ouro">
+                  Cadastrar barbearia
+                </Link>
+              </li>
+              <li>
+                <Link href="/login" className="text-texto-sec transition-colors hover:text-ouro">
+                  Entrar no painel
+                </Link>
+              </li>
+              <li>
+                <a href="#como-funciona" className="text-texto-sec transition-colors hover:text-ouro">
+                  Como funciona
+                </a>
+              </li>
+              <li>
+                <a href="#teste" className="text-texto-sec transition-colors hover:text-ouro">
+                  Testar como cliente
+                </a>
+              </li>
+            </ul>
           </div>
-          <LinkBotao href="/login" variante="contorno">
-            Área do barbeiro
-          </LinkBotao>
+          <p className="mt-20 text-label text-texto-disc lg:mt-28">
+            Feito pelo time Programadores da Fiel para o Startup Challenge UMC 2026.
+          </p>
+        </Revelar>
+        <div className="mx-auto mt-6 w-full max-w-[1600px] px-4 sm:px-8" aria-hidden>
+          <Image
+            src="/marca/logo-horizontal.png"
+            alt=""
+            width={1401}
+            height={144}
+            sizes="140vw"
+            className="h-auto w-[135%] max-w-none translate-y-[28%] opacity-90"
+          />
         </div>
       </footer>
     </div>
