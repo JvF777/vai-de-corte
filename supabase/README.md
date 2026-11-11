@@ -13,6 +13,7 @@ Etapa 1 do projeto: modelo de dados, migrations, RLS e seed.
 | `migrations/20261023000001_painel.sql` | Painel: RPC `criar_agendamento_manual` e o bucket público `barbearias` no Storage (logo e fotos), com escrita só do dono |
 | `migrations/20261105000001_avisos_push.sql` | Avisos no celular: tabela `inscricoes_push` e RPCs `salvar_inscricao_push`, `destinatarios_aviso_agendamento`, `descartar_inscricoes_push` |
 | `migrations/20261105000002_cadastro_barbearia.sql` | Cadastro pelo próprio dono: RPCs `slug_disponivel` e `criar_barbearia` |
+| `migrations/20261109000002_cadastro_servicos_por_barbeiro.sql` | `criar_barbearia` aceita quais serviços cada barbeiro faz |
 | `seed.sql` | Duas barbearias **fictícias** (`ficticia-navalha-de-ouro` e `ficticia-corte-fino`) com serviços, barbeiros, horários, clientes e agendamentos de exemplo |
 | `scripts/vincular_usuario.sql` | Liga um usuário do Auth a uma barbearia como dono ou barbeiro |
 | `tests/*.test.sql` | Testes pgTAP: isolamento entre barbearias, permissões por papel e regras de agendamento |
@@ -78,7 +79,7 @@ Erros vêm com `message` = código estável e `details` = texto em português:
 Só para usuário logado:
 
 - `slug_disponivel(p_slug)`: o link está livre e no formato certo? (recusa reservados como `admin`, `painel` e `ficticia-*`).
-- `criar_barbearia(p_nome, p_slug, p_whatsapp, p_cidade, p_uf, p_endereco, p_horarios, p_servicos, p_barbeiros)`: cria a barbearia, o vínculo de dono, o funcionamento, os serviços e os barbeiros numa transação. Cada barbeiro faz todos os serviços no horário da barbearia; o marcado com `sou_eu` fica ligado ao login do dono. Erros: `NAO_AUTENTICADO`, `LIMITE_BARBEARIAS`, `DADOS_INVALIDOS`, `SLUG_INVALIDO`, `SLUG_EM_USO`.
+- `criar_barbearia(p_nome, p_slug, p_whatsapp, p_cidade, p_uf, p_endereco, p_horarios, p_servicos, p_barbeiros)`: cria a barbearia, o vínculo de dono, o funcionamento, os serviços e os barbeiros numa transação. Cada barbeiro trabalha no horário da barbearia e faz os serviços listados em `servicos` (posições em `p_servicos`; sem a chave, todos), e todo serviço precisa de alguém que faça; o marcado com `sou_eu` fica ligado ao login do dono. Erros: `NAO_AUTENTICADO`, `LIMITE_BARBEARIAS`, `DADOS_INVALIDOS`, `SLUG_INVALIDO`, `SLUG_EM_USO`.
 
 ## Storage
 

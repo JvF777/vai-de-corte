@@ -21,7 +21,10 @@ export function gerarSlug(texto: string) {
     .replace(/-+$/, "");
 }
 
-export const DURACOES = [15, 20, 30, 40, 45, 60, 75, 90, 120] as const;
+/** Durações oferecidas nos cadastros de serviço: de 10 min a 8 h (limite do banco). */
+export const DURACOES: readonly number[] = [
+  10, 15, 20, 30, 40, 45, 50, 60, 75, 90, 105, 120, 150, 180, 210, 240, 270, 300, 360, 420, 480,
+];
 
 export const MAX_SERVICOS = 30;
 export const MAX_BARBEIROS = 20;
@@ -70,7 +73,7 @@ const schemaBarbeiro = z.object({
 });
 
 export type ServicoCadastro = { nome: string; preco_centavos: number; duracao_minutos: number };
-export type BarbeiroCadastro = { nome: string; sou_eu: boolean };
+export type BarbeiroCadastro = { nome: string; sou_eu: boolean; servicos?: number[] };
 
 /**
  * Lê as listas de serviços e barbeiros do formulário (campos repetidos com o
@@ -85,6 +88,8 @@ export function lerListas(formData: FormData) {
   const precos = todos("servico_preco");
   const duracoes = todos("servico_duracao");
   const servicos: ServicoCadastro[] = [];
+  /** Linha do formulário -> posição em `servicos` (linhas vazias ou com erro ficam de fora). */
+  const posicaoDaLinha = new Map<number, number>();
   nomesS.forEach((nome, i) => {
     if (!nome.trim() && !(precos[i] ?? "").trim()) return;
     const r = schemaServico.safeParse({ nome, preco: precos[i] ?? "", duracao: duracoes[i] ?? "" });
@@ -95,11 +100,15 @@ export function lerListas(formData: FormData) {
       }
       return;
     }
+    posicaoDaLinha.set(i, servicos.length);
     servicos.push({ nome: r.data.nome, preco_centavos: r.data.preco, duracao_minutos: r.data.duracao });
   });
 
   const nomesB = todos("barbeiro_nome");
   const souEu = String(formData.get("sou_eu") ?? "");
+  // A tela marca quais serviços cada barbeiro faz (campos barbeiro_servicos_<linha>,
+  // com a linha do serviço). Sem esse marcador, todos fazem tudo.
+  const escolhe = formData.get("escolhe_servicos") === "sim";
   const barbeiros: BarbeiroCadastro[] = [];
   nomesB.forEach((nome, i) => {
     if (!nome.trim()) return;
@@ -108,8 +117,26 @@ export function lerListas(formData: FormData) {
       campos[`barbeiro_nome_${i}`] ??= r.error.issues[0].message;
       return;
     }
-    barbeiros.push({ nome: r.data.nome, sou_eu: r.data.souEu });
+    const barbeiro: BarbeiroCadastro = { nome: r.data.nome, sou_eu: r.data.souEu };
+    if (escolhe) {
+      const marcados = todos(`barbeiro_servicos_${i}`)
+        .map((v) => posicaoDaLinha.get(Number(v)))
+        .filter((v): v is number => v !== undefined);
+      barbeiro.servicos = [...new Set(marcados)].sort((a, b) => a - b);
+      if (!barbeiro.servicos.length && servicos.length) {
+        campos[`barbeiro_servicos_${i}`] = `Marque pelo menos um serviço que ${r.data.nome} faz.`;
+      }
+    }
+    barbeiros.push(barbeiro);
   });
+
+  if (escolhe && barbeiros.length && !Object.keys(campos).some((c) => c.startsWith("barbeiro_"))) {
+    const feitos = new Set(barbeiros.flatMap((b) => b.servicos ?? []));
+    const sobra = servicos.filter((_, i) => !feitos.has(i)).map((s) => s.nome);
+    if (sobra.length) {
+      campos.barbeiros_cobertura = `Ninguém faz ${sobra.join(", ")}. Marque em algum barbeiro ou apague o serviço.`;
+    }
+  }
 
   if (!servicos.length && !Object.keys(campos).some((c) => c.startsWith("servico_"))) {
     campos.servicos = "Cadastre pelo menos um serviço.";

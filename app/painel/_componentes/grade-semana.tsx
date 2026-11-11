@@ -59,7 +59,7 @@ export function GradeSemana({ valores, comAlmoco, erros = {}, rotuloFora, padrao
             {aberto ? (
               <div className="flex flex-col gap-2">
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                  <div className="flex items-center gap-2">
+                  <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:flex sm:w-auto">
                     <CampoHora nome={`inicio_${dia}`} valor={hhmm(v.inicio)} rotulo={`${nome}, começa`} erro={Boolean(erros[`inicio_${dia}`])} />
                     <span className="text-texto-sec">às</span>
                     <CampoHora nome={`fim_${dia}`} valor={hhmm(v.fim)} rotulo={`${nome}, termina`} erro={Boolean(erros[`fim_${dia}`])} />
@@ -115,7 +115,7 @@ function CampoHora({ nome, valor, rotulo, erro }: { nome: string; valor: string;
       step={300}
       aria-label={rotulo}
       aria-invalid={erro || undefined}
-      className="numeros min-h-11 w-[8.25rem] rounded-sm border border-borda-campo bg-superficie px-3 text-base text-texto transition-colors hover:border-texto-disc focus-visible:border-ouro focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ouro/40 aria-invalid:border-erro"
+      className="numeros min-h-11 w-full min-w-0 rounded-sm sm:w-[8.25rem] border border-borda-campo bg-superficie px-3 text-base text-texto transition-colors hover:border-texto-disc focus-visible:border-ouro focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ouro/40 aria-invalid:border-erro"
     />
   );
 }

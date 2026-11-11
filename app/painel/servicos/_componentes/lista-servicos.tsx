@@ -7,6 +7,8 @@ import { AreaTexto } from "@/components/ui/area-texto";
 import { Botao } from "@/components/ui/botao";
 import { Caixa } from "@/components/ui/caixa";
 import { Campo } from "@/components/ui/campo";
+import { CampoPreco } from "@/components/ui/campo-preco";
+import { DURACOES } from "@/lib/cadastro";
 import { Modal, RodapeModal } from "@/components/ui/modal";
 import { Painel } from "@/components/ui/painel";
 import { Selecao } from "@/components/ui/selecao";
@@ -17,7 +19,6 @@ import { excluirServico, salvarServico } from "../actions";
 
 type Barbeiro = { id: string; nome: string; ativo: boolean; servicoIds: string[] };
 
-const DURACOES = [10, 15, 20, 30, 40, 45, 50, 60, 75, 90, 105, 120, 150, 180, 210, 240];
 
 export function ListaServicos({ servicos, barbeiros }: { servicos: ServicoPainel[]; barbeiros: Barbeiro[] }) {
   // undefined = fechado, null = novo, objeto = editando
@@ -146,14 +147,12 @@ function FormularioServico({ servico, barbeiros, aoFechar }: { servico: ServicoP
             </option>
           ))}
         </Selecao>
-        <Campo
-          rotulo="Preço (R$)"
+        <CampoPreco
+          rotulo="Preço"
           name="preco"
-          inputMode="decimal"
           defaultValue={servico ? centavosParaTexto(servico.precoCentavos) : ""}
           placeholder="40,00"
           erro={erro("preco")}
-          className="numeros"
         />
       </div>
       <AreaTexto rotulo="Descrição (opcional)" name="descricao" defaultValue={servico?.descricao ?? ""} maxLength={500} erro={erro("descricao")} />

@@ -83,6 +83,39 @@ describe("lerListas", () => {
   });
 });
 
+describe("serviços por barbeiro", () => {
+  const base: [string, string][] = [
+    ["servico_nome", "Corte"],
+    ["servico_preco", "40"],
+    ["servico_duracao", "30"],
+    ["servico_nome", ""],
+    ["servico_preco", ""],
+    ["servico_duracao", "30"],
+    ["servico_nome", "Luzes"],
+    ["servico_preco", "180"],
+    ["servico_duracao", "180"],
+    ["escolhe_servicos", "sim"],
+    ["barbeiro_nome", "Ana"],
+    ["barbeiro_nome", "Beto"],
+  ];
+
+  it("converte a linha do serviço na posição final (pulando linhas vazias)", () => {
+    const r = lerListas(form([...base, ["barbeiro_servicos_0", "0"], ["barbeiro_servicos_0", "2"], ["barbeiro_servicos_1", "0"]]));
+    expect(r.campos).toEqual({});
+    expect(r.barbeiros.map((b) => b.servicos)).toEqual([[0, 1], [0]]);
+  });
+
+  it("exige pelo menos um serviço por barbeiro", () => {
+    const r = lerListas(form([...base, ["barbeiro_servicos_0", "0"], ["barbeiro_servicos_0", "2"]]));
+    expect(r.campos.barbeiro_servicos_1).toContain("Beto");
+  });
+
+  it("avisa quando um serviço fica sem barbeiro", () => {
+    const r = lerListas(form([...base, ["barbeiro_servicos_0", "0"], ["barbeiro_servicos_1", "0"]]));
+    expect(r.campos.barbeiros_cobertura).toContain("Luzes");
+  });
+});
+
 describe("passoDoCampo", () => {
   it("leva cada erro ao passo certo", () => {
     expect(passoDoCampo("slug")).toBe(0);
