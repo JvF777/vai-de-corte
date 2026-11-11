@@ -1,6 +1,6 @@
 import { ArrowRight, Check, LogIn } from "lucide-react";
 import { Revelar } from "@/components/animacao/revelar";
-import { Marca } from "@/components/marca";
+import { LogoCompleta, Marca } from "@/components/marca";
 import { LinkBotao, classesBotao } from "@/components/ui/botao";
 import { GradeHorarios } from "@/components/vitrine/grade-horarios";
 import { HeroAnimado } from "@/components/vitrine/hero-animado";
@@ -143,7 +143,7 @@ export default function PaginaInicial() {
       <footer className="border-t border-borda">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-10 sm:flex-row sm:items-end sm:justify-between sm:px-8">
           <div>
-            <Marca tamanho="lg" />
+            <LogoCompleta className="h-28 w-auto" />
             <p className="mt-3 max-w-[48ch] text-label text-texto-disc">
               Feito pelo time Programadores da Fiel para o Startup Challenge UMC 2026.
             </p>

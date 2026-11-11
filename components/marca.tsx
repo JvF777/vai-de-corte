@@ -1,24 +1,27 @@
+import Image from "next/image";
+
 /**
- * Marca do Vai de Corte: um traço diagonal (o corte) sobre o "V".
- * Desenhada em SVG para não depender de imagem e herdar a cor do token.
+ * Marca oficial do Vai de Corte: tesoura dourada + "VAI DE CORTE" em serifa.
+ * As imagens ficam em public/marca (fundo transparente, já no dourado #C8A96B do tema).
+ * Quem envolve a marca num link deve dar o aria-label; aqui o texto alternativo
+ * só nomeia o produto.
  */
-export function SimboloMarca({ className = "size-7" }: { className?: string }) {
+
+/** Tesoura + "VAI DE CORTE" numa linha: cabeçalhos e rodapés. */
+export function Marca({ tamanho = "md" }: { tamanho?: "md" | "lg" }) {
   return (
-    <svg viewBox="0 0 32 32" className={className} aria-hidden fill="none">
-      <rect width="32" height="32" rx="8" className="fill-ouro" />
-      <path d="M9 9.5 16 23l7-13.5" stroke="#17140E" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M7.5 19.5 24.5 12" stroke="#17140E" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
+    <Image
+      src="/marca/logo-horizontal.png"
+      alt="Vai de Corte"
+      width={1401}
+      height={144}
+      priority={tamanho === "md"}
+      className={`w-auto max-w-full ${tamanho === "lg" ? "h-8" : "h-[1.125rem] min-[380px]:h-6"}`}
+    />
   );
 }
 
-export function Marca({ tamanho = "md" }: { tamanho?: "md" | "lg" }) {
-  return (
-    <span className="inline-flex items-center gap-2.5">
-      <SimboloMarca className={tamanho === "lg" ? "size-9" : "size-7"} />
-      <span className={`whitespace-nowrap font-titulo font-bold tracking-[-0.01em] text-texto ${tamanho === "lg" ? "text-[1.375rem]" : "text-[1.125rem]"}`}>
-        Vai de Corte
-      </span>
-    </span>
-  );
+/** Logo completa (tesoura em cima, "VAI DE / CORTE" embaixo), para áreas de destaque. */
+export function LogoCompleta({ className = "h-28 w-auto" }: { className?: string }) {
+  return <Image src="/marca/logo.png" alt="Vai de Corte" width={912} height={720} className={className} />;
 }
