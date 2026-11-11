@@ -11,3 +11,6 @@ next-env.d.ts
 npm-debug.log*
 /coverage
 !.env.example
+
+# Saída das ferramentas de design (prints e relatórios)
+.taste-skill/
