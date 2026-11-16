@@ -220,6 +220,8 @@ type LinhaAgendamento = {
   preco_centavos: number;
   duracao_minutos: number;
   observacoes: string | null;
+  /** Nome digitado neste agendamento (link público); nulo = usar o do cadastro. */
+  cliente_nome: string | null;
   servico: { id: string; nome: string };
   cliente: { id: string; nome: string; whatsapp: string };
 };
@@ -241,7 +243,7 @@ export async function carregarAgendaDia(barbeariaId: string, data: string) {
     supabase
       .from("agendamentos")
       .select(
-        "id, barbeiro_id, inicio, fim, status, origem, preco_centavos, duracao_minutos, observacoes, servico:servicos(id, nome), cliente:clientes(id, nome, whatsapp)",
+        "id, barbeiro_id, inicio, fim, status, origem, preco_centavos, duracao_minutos, observacoes, cliente_nome, servico:servicos(id, nome), cliente:clientes(id, nome, whatsapp)",
       )
       .eq("barbearia_id", barbeariaId)
       .lt("inicio", ate.toISOString())
@@ -272,7 +274,7 @@ export async function carregarAgendaDia(barbeariaId: string, data: string) {
       duracaoMinutos: a.duracao_minutos,
       observacoes: a.observacoes,
       servico: a.servico,
-      cliente: a.cliente,
+      cliente: { ...a.cliente, nome: a.cliente_nome ?? a.cliente.nome },
     })),
     bloqueios: (bloqueios.data ?? []).map<BloqueioPainel>((b) => ({
       id: b.id,

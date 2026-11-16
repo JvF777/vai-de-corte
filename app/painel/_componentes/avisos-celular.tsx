@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Bell, BellOff, BellRing, Share } from "lucide-react";
+import { Bell, BellOff, BellRing, EllipsisVertical, Share, Smartphone } from "lucide-react";
 import { Botao } from "@/components/ui/botao";
 import { removerInscricaoPush, salvarInscricaoPush, testarAvisoPush } from "../actions";
 
@@ -30,6 +30,13 @@ function ehIphone() {
 function instalado() {
   return window.matchMedia("(display-mode: standalone)").matches || ("standalone" in navigator && navigator.standalone === true);
 }
+
+function ehAndroid() {
+  return /Android/.test(navigator.userAgent);
+}
+
+/** Evento do Chrome no Android que permite abrir o "Instalar app" por um botão nosso. */
+type EventoInstalar = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed" }> };
 
 function suportaPush() {
   return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
@@ -78,6 +85,64 @@ async function lerEstado(): Promise<{ estado: Estado; inscricao: PushSubscriptio
     return { estado: "ligado", inscricao };
   }
   return { estado: "desligado", inscricao: null };
+}
+
+/**
+ * No Android os avisos funcionam direto no Chrome, mas com o app instalado eles ficam
+ * mais confiáveis e o painel abre por um ícone na tela. Mostra como instalar.
+ */
+function DicaInstalarAndroid() {
+  const [mostrar, setMostrar] = useState(false);
+  const [pedido, setPedido] = useState<EventoInstalar | null>(null);
+
+  useEffect(() => {
+    if (!ehAndroid() || instalado()) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMostrar(true);
+    const aoPoderInstalar = (e: Event) => {
+      e.preventDefault();
+      setPedido(e as EventoInstalar);
+    };
+    const aoInstalar = () => setMostrar(false);
+    window.addEventListener("beforeinstallprompt", aoPoderInstalar);
+    window.addEventListener("appinstalled", aoInstalar);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", aoPoderInstalar);
+      window.removeEventListener("appinstalled", aoInstalar);
+    };
+  }, []);
+
+  if (!mostrar) return null;
+
+  async function instalar() {
+    if (!pedido) return;
+    await pedido.prompt();
+    const { outcome } = await pedido.userChoice;
+    setPedido(null);
+    if (outcome === "accepted") setMostrar(false);
+  }
+
+  return (
+    <div className="mt-3 border-t border-borda pt-3">
+      <p className="flex items-center gap-1.5 text-label font-medium text-texto">
+        <Smartphone className="size-3.5 shrink-0 text-ouro" aria-hidden />
+        Instale o app no celular
+      </p>
+      {pedido ? (
+        <>
+          <p className="mt-1 text-label text-texto-sec">O Vai de Corte ganha um ícone na tela e os avisos chegam melhor.</p>
+          <Botao variante="secundario" className="mt-2 w-full" onClick={instalar}>
+            Instalar app
+          </Botao>
+        </>
+      ) : (
+        <p className="mt-1 text-label text-texto-sec">
+          No Chrome, toque em <EllipsisVertical className="inline size-3.5 align-[-2px]" aria-label="menu" /> no canto de cima e
+          depois em <span className="text-texto">Instalar app</span> (ou <span className="text-texto">Adicionar à tela inicial</span>).
+        </p>
+      )}
+    </div>
+  );
 }
 
 export function AvisosCelular() {
@@ -225,6 +290,8 @@ export function AvisosCelular() {
           {mensagem.texto}
         </p>
       )}
+
+      {(estado === "desligado" || estado === "ligado") && <DicaInstalarAndroid />}
     </section>
   );
 }
