@@ -12,7 +12,7 @@ export function NavegacaoDia({ data, hoje, barbeiro }: { data: string; hoje: str
   const seta = "flex size-11 items-center justify-center rounded-sm border border-borda text-texto-sec transition-colors hover:border-borda-forte hover:text-texto";
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2" data-tutorial="agenda-dias">
       <LinkNaPagina href={url(somarDias(data, -1))} className={seta} aria-label="Dia anterior">
         <ChevronLeft className="size-5" aria-hidden />
       </LinkNaPagina>

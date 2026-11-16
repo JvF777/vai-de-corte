@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { gsap, SEM_MOVIMENTO, useGSAP } from "@/components/animacao/gsap";
+import { EVENTO_MENU } from "./tutorial/eventos";
 
 /**
  * Barra superior do celular/tablet com a gaveta de navegação.
@@ -57,6 +58,13 @@ export function MenuMobile({ marca, children }: { marca: ReactNode; children: Re
     setCaminhoAnterior(caminho);
     setAberto(false);
   }
+
+  // O tutorial abre e fecha o menu para mostrar os itens dele.
+  useEffect(() => {
+    const aoPedir = (e: Event) => setAberto(Boolean((e as CustomEvent<{ aberto: boolean }>).detail?.aberto));
+    window.addEventListener(EVENTO_MENU, aoPedir);
+    return () => window.removeEventListener(EVENTO_MENU, aoPedir);
+  }, []);
 
   useEffect(() => {
     if (!aberto) return;

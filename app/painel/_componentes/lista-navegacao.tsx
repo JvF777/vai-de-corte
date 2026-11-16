@@ -30,6 +30,7 @@ export function ListaNavegacao({ papel = null }: { papel?: Papel | null }) {
             <li key={href}>
               <Link
                 href={href}
+                data-tutorial={`nav:${href}`}
                 aria-current={ativo ? "page" : undefined}
                 className={`${classes} transition-colors ${
                   ativo ? "bg-elevado font-medium text-texto" : "text-texto-sec hover:bg-elevado hover:text-texto"

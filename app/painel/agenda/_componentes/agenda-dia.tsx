@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { LinkNaPagina } from "@/components/ui/link-na-pagina";
 import { Lock, Plus } from "lucide-react";
 import { Botao } from "@/components/ui/botao";
@@ -16,6 +16,7 @@ import { DetalheAgendamento } from "./detalhe-agendamento";
 import { DetalheBloqueio } from "./detalhe-bloqueio";
 import { NavegacaoDia } from "./navegacao-dia";
 import { NovoAgendamento, type MembroEquipe } from "./novo-agendamento";
+import { EVENTO_EXEMPLO, exemploLigado } from "../../_componentes/tutorial/eventos";
 
 export type BarbeiroDoDia = { id: string; nome: string; ativo: boolean; jornada: Jornada | null };
 
@@ -71,6 +72,32 @@ const HACHURA: CSSProperties = {
 
 type Abertura = { barbeiroId?: string; hora?: string } | null;
 
+/** Cliente fictício que o tutorial mostra na agenda vazia. Não vai para o banco. */
+function agendamentoExemplo(
+  data: string,
+  barbeiros: BarbeiroDoDia[],
+  servico: ServicoPainel | undefined,
+): AgendamentoPainel | null {
+  const barbeiro = barbeiros.find((b) => b.jornada);
+  if (!barbeiro?.jornada) return null;
+  const duracao = servico?.duracaoMinutos ?? 30;
+  // Uma hora depois de abrir: fica no alto da grade, onde o tutorial está mostrando.
+  const inicio = instanteLocal(data, horaParaMinutos(barbeiro.jornada.inicio) + 60).toISOString();
+  return {
+    id: "exemplo-tutorial",
+    barbeiroId: barbeiro.id,
+    inicio,
+    fim: new Date(new Date(inicio).getTime() + duracao * 60_000).toISOString(),
+    status: "agendado",
+    origem: "link_publico",
+    precoCentavos: servico?.precoCentavos ?? 4500,
+    duracaoMinutos: duracao,
+    observacoes: null,
+    servico: { id: servico?.id ?? "exemplo", nome: servico?.nome ?? "Corte" },
+    cliente: { id: "exemplo", nome: "Cliente de exemplo", whatsapp: "" },
+  };
+}
+
 export function AgendaDia(props: Props) {
   const { data, barbeiros, agendamentos, bloqueios, ehDono, meuBarbeiroId } = props;
   const [detalhe, setDetalhe] = useState<string | null>(null);
@@ -78,7 +105,15 @@ export function AgendaDia(props: Props) {
   const [novo, setNovo] = useState<Abertura>(null);
   const [bloquear, setBloquear] = useState<Abertura>(null);
 
-  const ativos = agendamentos.filter((a) => STATUS_ATIVOS.includes(a.status));
+  // O tutorial mostra um cliente de exemplo quando a agenda do dia está vazia (só na tela).
+  const [exemplo, setExemplo] = useState(exemploLigado);
+  useEffect(() => {
+    const aoMudar = (e: Event) => setExemplo(Boolean((e as CustomEvent<{ ativo: boolean }>).detail?.ativo));
+    window.addEventListener(EVENTO_EXEMPLO, aoMudar);
+    return () => window.removeEventListener(EVENTO_EXEMPLO, aoMudar);
+  }, []);
+
+  const reais = agendamentos.filter((a) => STATUS_ATIVOS.includes(a.status));
   const encerrados = agendamentos.filter((a) => !STATUS_ATIVOS.includes(a.status));
   const nomeBarbeiro = (id: string | null) => (id ? (barbeiros.find((b) => b.id === id)?.nome ?? "Barbeiro") : "Barbearia inteira");
   const agendamento = agendamentos.find((a) => a.id === detalhe) ?? null;
@@ -86,25 +121,30 @@ export function AgendaDia(props: Props) {
   const podeAgendar = props.servicos.length > 0 && props.equipe.length > 0;
 
   // Horários vagos de cada barbeiro que pode receber cliente: viram atalhos de "tocar e marcar".
-  const vagos = new Map<string, Horario[]>(
-    barbeiros.map((b) => [
-      b.id,
-      podeAgendar && props.equipe.some((m) => m.id === b.id)
-        ? horariosVagos({
-            data,
-            barbeiroId: b.id,
-            jornada: b.jornada,
-            funcionamento: props.funcionamento,
-            intervalo: props.intervalo,
-            ocupados: [
-              ...ativos.filter((a) => a.barbeiroId === b.id),
-              ...bloqueios.filter((x) => x.barbeiroId === null || x.barbeiroId === b.id),
-            ],
-            agora: new Date(props.agora),
-          })
-        : [],
-    ]),
-  );
+  const vagosCom = (ativos: AgendamentoPainel[]) =>
+    new Map<string, Horario[]>(
+      barbeiros.map((b) => [
+        b.id,
+        podeAgendar && props.equipe.some((m) => m.id === b.id)
+          ? horariosVagos({
+              data,
+              barbeiroId: b.id,
+              jornada: b.jornada,
+              funcionamento: props.funcionamento,
+              intervalo: props.intervalo,
+              ocupados: [
+                ...ativos.filter((a) => a.barbeiroId === b.id),
+                ...bloqueios.filter((x) => x.barbeiroId === null || x.barbeiroId === b.id),
+              ],
+              agora: new Date(props.agora),
+            })
+          : [],
+      ]),
+    );
+  const deExemplo = exemplo && !reais.length ? agendamentoExemplo(data, barbeiros, props.servicos[0]) : null;
+  const ativos = deExemplo ? [...reais, deExemplo] : reais;
+  const vagos = vagosCom(ativos);
+
   const abrirVago = (barbeiroId: string, hora: string) => setNovo({ barbeiroId, hora });
 
   return (
@@ -114,7 +154,7 @@ export function AgendaDia(props: Props) {
           <h1 className="font-titulo text-[1.625rem] font-bold leading-tight tracking-[-0.02em] sm:text-titulo">{props.titulo}</h1>
           <p className="mt-1 text-subtitulo text-texto-sec first-letter:uppercase">{props.subtitulo}</p>
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:flex">
+        <div className="grid grid-cols-2 gap-2 sm:flex" data-tutorial="agenda-acoes">
           <Botao variante="secundario" icone={<Lock aria-hidden />} onClick={() => setBloquear({})}>
             <span className="sm:hidden">Bloquear</span>
             <span className="hidden sm:inline">Bloquear horário</span>
@@ -157,10 +197,10 @@ export function AgendaDia(props: Props) {
       {barbeiros.length === 0 ? (
         <Painel className="px-5 py-10 text-center text-texto-sec">Nenhum barbeiro ativo. Cadastre a equipe em Barbeiros.</Painel>
       ) : (
-        <>
+        <div data-tutorial="agenda-horarios">
           <Grade {...props} ativos={ativos} vagos={vagos} aoAbrirAgendamento={setDetalhe} aoAbrirBloqueio={setBloqueioAberto} aoClicarHorario={abrirVago} />
           <Lista {...props} ativos={ativos} vagos={vagos} aoAbrirAgendamento={setDetalhe} aoAbrirBloqueio={setBloqueioAberto} aoClicarHorario={abrirVago} />
-        </>
+        </div>
       )}
 
       {encerrados.length > 0 && (

@@ -127,7 +127,9 @@ async function ConteudoPainel({ searchParams }: { searchParams: PageProps<"/pain
             É por ele que o cliente marca sozinho. Coloque na bio do Instagram e no QR Code do balcão.
           </p>
         </div>
-        <CopiarLink slug={atual.slug} />
+        <div data-tutorial="link">
+          <CopiarLink slug={atual.slug} />
+        </div>
       </Painel>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" data-anima>

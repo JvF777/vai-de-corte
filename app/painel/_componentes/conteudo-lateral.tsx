@@ -6,6 +6,7 @@ import { sair } from "../actions";
 import { AvisosCelular } from "./avisos-celular";
 import { ListaNavegacao } from "./lista-navegacao";
 import { SeletorBarbearia } from "./seletor-barbearia";
+import { BotaoTutorial } from "./tutorial/botao-tutorial";
 
 /** Miolo da barra lateral (usado na sidebar do desktop e na gaveta do celular). */
 export function ConteudoLateral() {
@@ -18,7 +19,12 @@ export function ConteudoLateral() {
         <Navegacao />
       </Suspense>
       <div className="mt-auto flex flex-col gap-4">
-        <AvisosCelular />
+        <Suspense fallback={null}>
+          <VerTutorial />
+        </Suspense>
+        <div data-tutorial="avisos">
+          <AvisosCelular />
+        </div>
         <Suspense fallback={<div className="h-24 rounded-sm bg-elevado" />}>
           <Usuario />
         </Suspense>
@@ -30,6 +36,12 @@ export function ConteudoLateral() {
 async function Navegacao() {
   const { atual } = await obterContextoPainel();
   return <ListaNavegacao papel={atual?.papel ?? null} />;
+}
+
+/** "Ver tutorial" só aparece depois que a barbearia existe. */
+async function VerTutorial() {
+  const { atual } = await obterContextoPainel();
+  return atual ? <BotaoTutorial /> : null;
 }
 
 async function EscopoBarbearia() {

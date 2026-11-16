@@ -3,8 +3,10 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { Marca } from "@/components/marca";
 import { metadataApp } from "@/lib/app-instalavel";
+import { obterContextoPainel } from "@/lib/auth";
 import { ConteudoLateral } from "./_componentes/conteudo-lateral";
 import { MenuMobile } from "./_componentes/menu-mobile";
+import { Tutorial } from "./_componentes/tutorial/tutorial";
 
 export const metadata: Metadata = {
   title: { default: "Painel", template: "%s | Painel | Vai de Corte" },
@@ -39,6 +41,16 @@ export default function LayoutPainel({ children }: LayoutProps<"/painel">) {
       <main className="w-full min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8 lg:px-12 lg:py-10">
         <div className="mx-auto w-full max-w-5xl">{children}</div>
       </main>
+
+      <Suspense fallback={null}>
+        <TutorialDoPainel />
+      </Suspense>
     </div>
   );
+}
+
+/** Passo a passo do painel: abre sozinho na primeira visita e pelo "Ver tutorial" do menu. */
+async function TutorialDoPainel() {
+  const { usuario, atual } = await obterContextoPainel();
+  return <Tutorial usuarioId={usuario.id} papel={atual?.papel ?? null} temBarbearia={Boolean(atual)} />;
 }
