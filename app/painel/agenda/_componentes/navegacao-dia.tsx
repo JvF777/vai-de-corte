@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { LinkNaPagina } from "@/components/ui/link-na-pagina";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { dataValida, somarDias } from "@/lib/availability";
@@ -13,10 +13,10 @@ export function NavegacaoDia({ data, hoje, barbeiro }: { data: string; hoje: str
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Link href={url(somarDias(data, -1))} className={seta} aria-label="Dia anterior">
+      <LinkNaPagina href={url(somarDias(data, -1))} className={seta} aria-label="Dia anterior">
         <ChevronLeft className="size-5" aria-hidden />
-      </Link>
-      <Link
+      </LinkNaPagina>
+      <LinkNaPagina
         href={url(hoje)}
         aria-current={data === hoje ? "date" : undefined}
         className={`inline-flex min-h-11 items-center rounded-sm border px-4 transition-colors ${
@@ -24,10 +24,10 @@ export function NavegacaoDia({ data, hoje, barbeiro }: { data: string; hoje: str
         }`}
       >
         Hoje
-      </Link>
-      <Link href={url(somarDias(data, 1))} className={seta} aria-label="Próximo dia">
+      </LinkNaPagina>
+      <LinkNaPagina href={url(somarDias(data, 1))} className={seta} aria-label="Próximo dia">
         <ChevronRight className="size-5" aria-hidden />
-      </Link>
+      </LinkNaPagina>
       <label className="sr-only" htmlFor="data-agenda">
         Ir para a data
       </label>

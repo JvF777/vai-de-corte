@@ -21,6 +21,7 @@ import { Crescer } from "@/components/animacao/crescer";
 import { Revelar } from "@/components/animacao/revelar";
 import { Avatar } from "@/components/ui/avatar";
 import { Aviso } from "@/components/ui/aviso";
+import { LinkNaPagina } from "@/components/ui/link-na-pagina";
 import { Painel } from "@/components/ui/painel";
 import { SeloStatus } from "@/components/ui/selo-status";
 import { NavegacaoPeriodo } from "./_componentes/navegacao-periodo";
@@ -129,7 +130,7 @@ async function TelaGanhos({ searchParams }: Pick<PageProps<"/painel/ganhos">, "s
                 const ativo = b.id === filtro;
                 return (
                   <li key={b.id ?? "todos"}>
-                    <Link
+                    <LinkNaPagina
                       href={urlGanhos(periodo, data, b.id)}
                       aria-current={ativo ? "true" : undefined}
                       className={`inline-flex min-h-11 items-center whitespace-nowrap rounded-full border px-4 text-base transition-colors ${
@@ -137,7 +138,7 @@ async function TelaGanhos({ searchParams }: Pick<PageProps<"/painel/ganhos">, "s
                       }`}
                     >
                       {b.nome}
-                    </Link>
+                    </LinkNaPagina>
                   </li>
                 );
               })}
@@ -449,7 +450,7 @@ function PorBarbeiro({ g, equipe, periodo, data }: { g: Ganhos; equipe: Barbeiro
       <ul className="divide-y divide-borda">
         {linhas.map(({ b, n }) => (
           <li key={b.id}>
-            <Link
+            <LinkNaPagina
               href={urlGanhos(periodo, data, b.id)}
               className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-5 py-3 transition-colors hover:bg-elevado sm:px-6"
             >
@@ -463,7 +464,7 @@ function PorBarbeiro({ g, equipe, periodo, data }: { g: Ganhos; equipe: Barbeiro
                 </p>
               </div>
               <span className={`numeros ${n.faturadoCentavos ? "font-semibold text-texto" : "text-texto-disc"}`}>{formatarPreco(n.faturadoCentavos)}</span>
-            </Link>
+            </LinkNaPagina>
           </li>
         ))}
       </ul>

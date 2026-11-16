@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { LinkNaPagina } from "@/components/ui/link-na-pagina";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { dataValida, somarDias } from "@/lib/availability";
@@ -27,7 +27,7 @@ export function NavegacaoPeriodo({ periodo, data, hoje, barbeiro }: Props) {
           // Do mês atual para "Dia" cai em hoje; de outro mês, no dia 1 dele.
           const destino = p === "dia" && periodo === "mes" && atual ? hoje : data;
           return (
-            <Link
+            <LinkNaPagina
               key={p}
               href={urlGanhos(p, destino, barbeiro)}
               aria-current={ativo ? "page" : undefined}
@@ -36,17 +36,17 @@ export function NavegacaoPeriodo({ periodo, data, hoje, barbeiro }: Props) {
               }`}
             >
               {p === "dia" ? "Dia" : "Mês"}
-            </Link>
+            </LinkNaPagina>
           );
         })}
       </div>
 
       {/* Setas e "Hoje" quebram de linha juntos: no celular estreito nenhuma seta fica sozinha. */}
       <div className="flex items-center gap-2">
-        <Link href={urlGanhos(periodo, mover(-1), barbeiro)} className={seta} aria-label={periodo === "mes" ? "Mês anterior" : "Dia anterior"}>
+        <LinkNaPagina href={urlGanhos(periodo, mover(-1), barbeiro)} className={seta} aria-label={periodo === "mes" ? "Mês anterior" : "Dia anterior"}>
           <ChevronLeft className="size-5" aria-hidden />
-        </Link>
-        <Link
+        </LinkNaPagina>
+        <LinkNaPagina
           href={urlGanhos(periodo, hoje, barbeiro)}
           aria-current={atual ? "date" : undefined}
           className={`inline-flex min-h-11 items-center rounded-sm border px-4 transition-colors ${
@@ -54,10 +54,10 @@ export function NavegacaoPeriodo({ periodo, data, hoje, barbeiro }: Props) {
           }`}
         >
           {periodo === "mes" ? "Este mês" : "Hoje"}
-        </Link>
-        <Link href={urlGanhos(periodo, mover(1), barbeiro)} className={seta} aria-label={periodo === "mes" ? "Próximo mês" : "Próximo dia"}>
+        </LinkNaPagina>
+        <LinkNaPagina href={urlGanhos(periodo, mover(1), barbeiro)} className={seta} aria-label={periodo === "mes" ? "Próximo mês" : "Próximo dia"}>
           <ChevronRight className="size-5" aria-hidden />
-        </Link>
+        </LinkNaPagina>
       </div>
 
       <label className="sr-only" htmlFor="data-ganhos">

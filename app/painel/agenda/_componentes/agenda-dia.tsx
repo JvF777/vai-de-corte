@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
-import Link from "next/link";
+import { LinkNaPagina } from "@/components/ui/link-na-pagina";
 import { Lock, Plus } from "lucide-react";
 import { Botao } from "@/components/ui/botao";
 import { Painel } from "@/components/ui/painel";
@@ -133,7 +133,7 @@ export function AgendaDia(props: Props) {
             <ul className="flex w-max gap-2">
               {props.filtros.map((f) => (
                 <li key={f.id ?? "todos"}>
-                  <Link
+                  <LinkNaPagina
                     href={`/painel/agenda?data=${data}${f.id ? `&barbeiro=${f.id}` : ""}`}
                     aria-current={f.ativo ? "true" : undefined}
                     className={`inline-flex min-h-11 items-center whitespace-nowrap rounded-full border px-4 text-base transition-colors ${
@@ -141,7 +141,7 @@ export function AgendaDia(props: Props) {
                     }`}
                   >
                     {f.rotulo}
-                  </Link>
+                  </LinkNaPagina>
                 </li>
               ))}
             </ul>
