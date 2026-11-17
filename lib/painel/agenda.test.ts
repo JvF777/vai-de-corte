@@ -1,7 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { instanteLocal, type Funcionamento, type Jornada } from "@/lib/availability";
 import { lerPreco } from "@/lib/formatos";
-import { acoesPermitidas, faixaDoDia, horariosVagos, limitesDoDia, posicaoNaFaixa, resumirDia, resumirDias } from "./agenda";
+import {
+  acoesPermitidas,
+  faixaDoDia,
+  horariosVagos,
+  limitesDoDia,
+  mensagemCancelamento,
+  posicaoNaFaixa,
+  resumirDia,
+  resumirDias,
+} from "./agenda";
 
 const SEXTA = "2026-10-23";
 const h = (hora: string, data = SEXTA) => {
@@ -115,5 +124,27 @@ describe("horariosVagos", () => {
   it("não oferece horário que já passou nem dia de folga", () => {
     expect(horariosVagos({ ...base, ocupados: [], agora: h("10:40") }).map((v) => v.hora)).toEqual(["11:00", "11:30"]);
     expect(horariosVagos({ ...base, jornada: null, ocupados: [] })).toEqual([]);
+  });
+});
+
+describe("mensagemCancelamento", () => {
+  it("traz primeiro nome, barbearia, dia, hora, serviço e o link para remarcar", () => {
+    const msg = mensagemCancelamento({
+      cliente: "  Cesar Augusto ",
+      barbearia: "Navalha de Ouro",
+      servico: "Corte",
+      inicio: h("14:30"),
+      linkAgendamento: "https://vai-de-corte.vercel.app/barbearia/navalha-de-ouro",
+    });
+    expect(msg).toBe(
+      "Olá, Cesar! Aqui é da Navalha de Ouro.\n\n" +
+        "Infelizmente precisamos cancelar o seu horário de sexta-feira, 23 de outubro, às 14:30 (Corte). Pedimos desculpas pelo transtorno.\n\n" +
+        "Para marcar outro horário, é só escolher aqui: https://vai-de-corte.vercel.app/barbearia/navalha-de-ouro",
+    );
+  });
+
+  it("sem nome, cumprimenta sem nome", () => {
+    const msg = mensagemCancelamento({ cliente: "", barbearia: "B", servico: "S", inicio: h("09:00"), linkAgendamento: "x" });
+    expect(msg.startsWith("Olá! Aqui é da B.")).toBe(true);
   });
 });

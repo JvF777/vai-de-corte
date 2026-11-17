@@ -41,6 +41,8 @@ type Props = {
   /** Intervalo da grade da barbearia (minutos): o tamanho de cada horário vago. */
   intervalo: number;
   barbeiroFiltro: string | null;
+  /** Nome e link público: vão na mensagem de WhatsApp quando um horário é cancelado. */
+  barbearia: { nome: string; slug: string };
   /** Atalhos por barbeiro (só para o dono com mais de um barbeiro). id nulo = todos. */
   filtros: { id: string | null; rotulo: string; ativo: boolean }[];
 };
@@ -236,6 +238,7 @@ export function AgendaDia(props: Props) {
         agendamento={agendamento}
         nomeBarbeiro={agendamento ? nomeBarbeiro(agendamento.barbeiroId) : ""}
         agora={props.agora}
+        barbearia={props.barbearia}
         aoFechar={() => setDetalhe(null)}
       />
       <DetalheBloqueio

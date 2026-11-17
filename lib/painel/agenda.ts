@@ -15,6 +15,7 @@ import {
   type Jornada,
   type Ocupado,
 } from "@/lib/availability";
+import { formatarDataLonga, formatarHora } from "@/lib/formatos";
 
 export type Status = "agendado" | "confirmado" | "concluido" | "cancelado" | "falta";
 export type Acao = "confirmar" | "concluir" | "falta" | "cancelar" | "reabrir";
@@ -177,4 +178,24 @@ export function horariosVagos(entrada: {
     regras: { intervaloMinutos: entrada.intervalo, antecedenciaMinutos: 0, janelaDias: 366 },
     agora: entrada.agora,
   });
+}
+
+/**
+ * Mensagem pronta para avisar o cliente no WhatsApp que o horário foi cancelado.
+ * O barbeiro só toca em enviar; o link leva para a página da barbearia para marcar de novo.
+ */
+export function mensagemCancelamento(d: {
+  cliente: string;
+  barbearia: string;
+  servico: string;
+  inicio: Date | string;
+  linkAgendamento: string;
+}): string {
+  const nome = d.cliente.trim().split(/\s+/)[0];
+  const saudacao = nome ? `Olá, ${nome}!` : "Olá!";
+  return [
+    `${saudacao} Aqui é da ${d.barbearia}.`,
+    `Infelizmente precisamos cancelar o seu horário de ${formatarDataLonga(d.inicio)}, às ${formatarHora(d.inicio)} (${d.servico}). Pedimos desculpas pelo transtorno.`,
+    `Para marcar outro horário, é só escolher aqui: ${d.linkAgendamento}`,
+  ].join("\n\n");
 }

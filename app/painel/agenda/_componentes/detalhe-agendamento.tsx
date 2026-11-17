@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useSyncExternalStore, useTransition } from "react";
 import { Ban, Check, CheckCheck, MessageCircle, RotateCcw, UserX } from "lucide-react";
 import { Aviso } from "@/components/ui/aviso";
-import { Botao, type VarianteBotao } from "@/components/ui/botao";
+import { Botao, classesBotao, type VarianteBotao } from "@/components/ui/botao";
 import { Modal } from "@/components/ui/modal";
 import { SeloStatus } from "@/components/ui/selo-status";
 import { formatarDataLonga, formatarHora, formatarPreco, formatarWhatsapp, linkWhatsapp } from "@/lib/formatos";
-import { acoesPermitidas, type Acao } from "@/lib/painel/agenda";
+import { acoesPermitidas, mensagemCancelamento, type Acao } from "@/lib/painel/agenda";
 import type { AgendamentoPainel } from "@/lib/painel/dados";
 import { alterarStatus } from "../actions";
 
@@ -19,14 +19,19 @@ const BOTOES: Record<Acao, { rotulo: string; carregando: string; variante: Varia
   reabrir: { rotulo: "Reabrir agendamento", carregando: "Reabrindo...", variante: "secundario", Icone: RotateCcw },
 };
 
+type Barbearia = { nome: string; slug: string };
+
 type Props = {
   agendamento: AgendamentoPainel | null;
   nomeBarbeiro: string;
   agora: string;
+  barbearia: Barbearia;
   aoFechar: () => void;
 };
 
-export function DetalheAgendamento({ agendamento, nomeBarbeiro, agora, aoFechar }: Props) {
+const semAssinatura = () => () => {};
+
+export function DetalheAgendamento({ agendamento, nomeBarbeiro, agora, barbearia, aoFechar }: Props) {
   // O conteúdo fica num componente com key: cada agendamento aberto começa sem erro nem confirmação pendente.
   return (
     <Modal
@@ -35,14 +40,27 @@ export function DetalheAgendamento({ agendamento, nomeBarbeiro, agora, aoFechar 
       titulo={agendamento?.cliente.nome ?? ""}
       descricao={agendamento ? `${agendamento.servico.nome} com ${nomeBarbeiro}` : undefined}
     >
-      {agendamento && <Conteudo key={agendamento.id} agendamento={agendamento} agora={agora} aoFechar={aoFechar} />}
+      {agendamento && <Conteudo key={agendamento.id} agendamento={agendamento} agora={agora} barbearia={barbearia} aoFechar={aoFechar} />}
     </Modal>
   );
 }
 
-function Conteudo({ agendamento: a, agora, aoFechar }: { agendamento: AgendamentoPainel; agora: string; aoFechar: () => void }) {
+function Conteudo({
+  agendamento: a,
+  agora,
+  barbearia,
+  aoFechar,
+}: {
+  agendamento: AgendamentoPainel;
+  agora: string;
+  barbearia: Barbearia;
+  aoFechar: () => void;
+}) {
   const [erro, setErro] = useState<string | null>(null);
   const [confirmandoCancelamento, setConfirmandoCancelamento] = useState(false);
+  // Depois de cancelar, o detalhe fica aberto para o barbeiro avisar o cliente no WhatsApp.
+  const [acabouDeCancelar, setAcabouDeCancelar] = useState(false);
+  const origem = useSyncExternalStore(semAssinatura, () => window.location.origin, () => "");
   const [emAndamento, setEmAndamento] = useState<Acao | null>(null);
   const [, iniciar] = useTransition();
 
@@ -58,11 +76,25 @@ function Conteudo({ agendamento: a, agora, aoFechar }: { agendamento: Agendament
       const r = await alterarStatus({ id: a.id, acao });
       setEmAndamento(null);
       if (r.erro) setErro(r.erro);
-      else aoFechar();
+      else if (acao === "cancelar") {
+        setConfirmandoCancelamento(false);
+        setAcabouDeCancelar(true);
+      } else aoFechar();
     });
   }
 
   const ocupado = emAndamento !== null;
+  const primeiroNome = a.cliente.nome.split(" ")[0];
+  const linkAviso = linkWhatsapp(
+    a.cliente.whatsapp,
+    mensagemCancelamento({
+      cliente: a.cliente.nome,
+      barbearia: barbearia.nome,
+      servico: a.servico.nome,
+      inicio: a.inicio,
+      linkAgendamento: `${origem}/barbearia/${barbearia.slug}`,
+    }),
+  );
 
   return (
     <div className="flex flex-col gap-5 pb-5">
@@ -103,7 +135,23 @@ function Conteudo({ agendamento: a, agora, aoFechar }: { agendamento: Agendament
 
       {erro && <Aviso tipo="erro">{erro}</Aviso>}
 
-      {confirmandoCancelamento ? (
+      {acabouDeCancelar ? (
+        <div className="flex flex-col gap-3 rounded-sm border border-ouro-discreto bg-ouro/5 p-4" role="status">
+          <p className="font-medium text-texto">Horário cancelado</p>
+          <p className="text-texto-sec">
+            Avise {primeiroNome} pelo WhatsApp. A mensagem já vai pronta, com o link para marcar outro horário. É só tocar em enviar.
+          </p>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Botao variante="fantasma" onClick={aoFechar}>
+              Fechar
+            </Botao>
+            <a href={linkAviso} target="_blank" rel="noreferrer" className={classesBotao("primario")}>
+              <MessageCircle aria-hidden />
+              Avisar no WhatsApp
+            </a>
+          </div>
+        </div>
+      ) : confirmandoCancelamento ? (
         <div className="flex flex-col gap-3 rounded-sm border border-erro/40 bg-erro-fundo p-4">
           <p className="font-medium text-texto">Cancelar o horário de {a.cliente.nome.split(" ")[0]}?</p>
           <p className="text-texto-sec">O horário volta a ficar livre no link de agendamento.</p>
@@ -124,6 +172,12 @@ function Conteudo({ agendamento: a, agora, aoFechar }: { agendamento: Agendament
         </div>
       ) : (
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          {a.status === "cancelado" && (
+            <a href={linkAviso} target="_blank" rel="noreferrer" className={classesBotao("contorno")}>
+              <MessageCircle aria-hidden />
+              Avisar no WhatsApp
+            </a>
+          )}
           {principais.map((acao) => {
             const { rotulo, carregando, variante, Icone } = BOTOES[acao];
             return (

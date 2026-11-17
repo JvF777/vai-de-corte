@@ -138,6 +138,7 @@ async function Agenda({ searchParams }: Pick<PageProps<"/painel/agenda">, "searc
         funcionamento={cadastro.funcionamento}
         intervalo={cadastro.barbearia.regras.intervaloMinutos}
         barbeiroFiltro={filtro && visiveis.length === 1 ? filtro : null}
+        barbearia={{ nome: cadastro.barbearia.nome, slug: cadastro.barbearia.slug }}
         filtros={
           chips
             ? [
